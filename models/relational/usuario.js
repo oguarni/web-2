@@ -26,6 +26,21 @@ module.exports = (sequelize, Sequelize) => {
             validate: {
                 isIn: [[1, 2]]
             }
+        },
+        email: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            validate: {
+                isEmail: true
+            }
+        },
+        telefone: {
+            type: Sequelize.STRING,
+            allowNull: true
+        },
+        ativo: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: true
         }
     });
     return Usuario;

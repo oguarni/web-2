@@ -7,27 +7,96 @@ const { isAuthenticated, isAdmin, isOwnerOrAdmin } = require('../middlewares/aut
 const route = express.Router();
 
 // Cria as tabelas no banco de dados - descomentar para a primeira execução
-/*
-db.sequelize.sync({force: true}).then(() => {
+
+db.sequelize.sync({force: true}).then(async () => {
     console.log('{ force: true }');
     
-    // Criar usuário administrador padrão
-    db.Usuario.create({
+    // Criar usuários padrão
+    const admin = await db.Usuario.create({
         nome: 'Administrador',
         login: 'admin',
         senha: '1234',
-        tipo: 1 // 1 = admin
+        tipo: 1,
+        email: 'admin@sistema.com',
+        telefone: '(00) 00000-0000'
     });
     
-    // Criar usuário comum padrão
-    db.Usuario.create({
+    const usuario = await db.Usuario.create({
         nome: 'Usuário',
         login: 'usuario',
         senha: '1234',
-        tipo: 2 // 2 = usuário comum
+        tipo: 2,
+        email: 'usuario@sistema.com',
+        telefone: '(00) 00000-0001'
     });
+    
+    // Criar espaços
+    const sala1 = await db.Espaco.create({
+        nome: 'Sala de Reunião 1',
+        descricao: 'Sala com capacidade para 10 pessoas',
+        capacidade: 10,
+        tipo: 'sala'
+    });
+    
+    const auditorio = await db.Espaco.create({
+        nome: 'Auditório Principal',
+        descricao: 'Auditório com projetor e sistema de som',
+        capacidade: 100,
+        tipo: 'auditorio'
+    });
+    
+    const quadra = await db.Espaco.create({
+        nome: 'Quadra Poliesportiva',
+        descricao: 'Quadra coberta para diversos esportes',
+        capacidade: 20,
+        tipo: 'quadra'
+    });
+    
+    // Criar recursos
+    const projetor = await db.Recurso.create({
+        nome: 'Projetor',
+        descricao: 'Projetor Full HD',
+        quantidade: 5
+    });
+    
+    const microfone = await db.Recurso.create({
+        nome: 'Microfone',
+        descricao: 'Microfone sem fio',
+        quantidade: 10
+    });
+    
+    const notebook = await db.Recurso.create({
+        nome: 'Notebook',
+        descricao: 'Notebook para apresentações',
+        quantidade: 3
+    });
+    
+    // Criar uma reserva exemplo
+    const reserva = await db.Reserva.create({
+        titulo: 'Reunião de Planejamento',
+        dataInicio: new Date('2025-06-01T14:00:00'),
+        dataFim: new Date('2025-06-01T16:00:00'),
+        descricao: 'Reunião mensal de planejamento',
+        status: 'confirmada',
+        usuarioId: usuario.id,
+        espacoId: sala1.id
+    });
+    
+    // Adicionar recursos à reserva (N:N)
+    await db.ReservaRecurso.create({
+        reservaId: reserva.id,
+        recursoId: projetor.id,
+        quantidade: 1
+    });
+    
+    await db.ReservaRecurso.create({
+        reservaId: reserva.id,
+        recursoId: notebook.id,
+        quantidade: 1
+    });
+    
+    console.log('Dados iniciais criados com sucesso!');
 });
-*/
 
 module.exports = route;
 
