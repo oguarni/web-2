@@ -1,0 +1,27 @@
+{{#if erro}}
+    <div style="color: red; background-color: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        {{erro}}
+    </div>
+{{/if}}
+
+<h2 style="text-align: center; margin-bottom: 20px;">Login</h2>
+
+<form action="/login" method="post">
+    <div style="margin-bottom: 15px;">
+        <label for="login" style="display: block; margin-bottom: 5px; font-weight: bold;">Login:</label>
+        <input type="text" id="login" name="login" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="senha" style="display: block; margin-bottom: 5px; font-weight: bold;">Senha:</label>
+        <input type="password" id="senha" name="senha" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+    </div>
+    
+    <button type="submit" style="background-color: #3498db; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;">Entrar</button>
+</form>
+
+<div style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+    <p>Usuários para teste:</p>
+    <p><strong>Admin:</strong> login: admin / senha: 1234</p>
+    <p><strong>Usuário comum:</strong> login: usuario / senha: 1234</p>
+</div>

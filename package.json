@@ -1,0 +1,21 @@
+{
+  "name": "sistema-reservas-espacos",
+  "version": "1.0.0",
+  "description": "Sistema de Reservas de Espaços Coletivos",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "Gabriel Felipe Guarnieri",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-handlebars": "^7.1.2",
+    "express-session": "^1.17.3",
+    "mongoose": "^7.5.0",
+    "pg": "^8.11.3",
+    "sequelize": "^6.32.1"
+  }
+}
