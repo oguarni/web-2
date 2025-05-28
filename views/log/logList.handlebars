@@ -1,0 +1,117 @@
+<h2>Logs do Sistema</h2>
+
+<div style="margin-bottom: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 4px; border-left: 4px solid #4caf50;">
+    <p style="margin: 0;"><strong>Informação:</strong> Este painel mostra todas as atividades registradas no sistema. Apenas administradores têm acesso a estas informações.</p>
+</div>
+
+{{#if logs.length}}
+<div style="overflow-x: auto;">
+    <table style="min-width: 100%;">
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Usuário ID</th>
+                <th>Ação</th>
+                <th>IP</th>
+                <th>Detalhes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each logs}}
+            <tr>
+                <td style="white-space: nowrap; min-width: 150px;">
+                    {{this.timestampFormatado}}
+                </td>
+                <td style="text-align: center;">
+                    <strong>{{this.usuarioId}}</strong>
+                </td>
+                <td>
+                    <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; color: white;
+                        {{#if (eq this.acao 'login')}}background-color: #3498db;{{/if}}
+                        {{#if (eq this.acao 'reserva_criada')}}background-color: #27ae60;{{/if}}
+                        {{#if (eq this.acao 'reserva_atualizada')}}background-color: #f39c12;{{/if}}
+                        {{#if (eq this.acao 'reserva_excluida')}}background-color: #e74c3c;{{/if}}
+                        {{#if (eq this.acao 'usuario_criado')}}background-color: #9b59b6;{{/if}}
+                        {{#if (eq this.acao 'usuario_atualizado')}}background-color: #e67e22;{{/if}}
+                        {{#if (eq this.acao 'espaco_criado')}}background-color: #1abc9c;{{/if}}
+                        {{#if (eq this.acao 'espaco_atualizado')}}background-color: #34495e;{{/if}}
+                        {{#if (eq this.acao 'espaco_excluido')}}background-color: #c0392b;{{/if}}
+                        {{#if (eq this.acao 'recurso_criado')}}background-color: #16a085;{{/if}}
+                        {{#if (eq this.acao 'recurso_atualizado')}}background-color: #d35400;{{/if}}
+                        {{#if (eq this.acao 'recurso_excluido')}}background-color: #8e44ad;{{/if}}
+                        {{#unless (or (eq this.acao 'login') (eq this.acao 'reserva_criada') (eq this.acao 'reserva_atualizada') (eq this.acao 'reserva_excluida') (eq this.acao 'usuario_criado') (eq this.acao 'usuario_atualizado') (eq this.acao 'espaco_criado') (eq this.acao 'espaco_atualizado') (eq this.acao 'espaco_excluido') (eq this.acao 'recurso_criado') (eq this.acao 'recurso_atualizado') (eq this.acao 'recurso_excluido'))}}background-color: #95a5a6;{{/unless}}">
+                        
+                        {{#if (eq this.acao 'login')}}Login{{/if}}
+                        {{#if (eq this.acao 'reserva_criada')}}Reserva Criada{{/if}}
+                        {{#if (eq this.acao 'reserva_atualizada')}}Reserva Atualizada{{/if}}
+                        {{#if (eq this.acao 'reserva_excluida')}}Reserva Excluída{{/if}}
+                        {{#if (eq this.acao 'usuario_criado')}}Usuário Criado{{/if}}
+                        {{#if (eq this.acao 'usuario_atualizado')}}Usuário Atualizado{{/if}}
+                        {{#if (eq this.acao 'espaco_criado')}}Espaço Criado{{/if}}
+                        {{#if (eq this.acao 'espaco_atualizado')}}Espaço Atualizado{{/if}}
+                        {{#if (eq this.acao 'espaco_excluido')}}Espaço Excluído{{/if}}
+                        {{#if (eq this.acao 'recurso_criado')}}Recurso Criado{{/if}}
+                        {{#if (eq this.acao 'recurso_atualizado')}}Recurso Atualizado{{/if}}
+                        {{#if (eq this.acao 'recurso_excluido')}}Recurso Excluído{{/if}}
+                        {{#unless (or (eq this.acao 'login') (eq this.acao 'reserva_criada') (eq this.acao 'reserva_atualizada') (eq this.acao 'reserva_excluida') (eq this.acao 'usuario_criado') (eq this.acao 'usuario_atualizado') (eq this.acao 'espaco_criado') (eq this.acao 'espaco_atualizado') (eq this.acao 'espaco_excluido') (eq this.acao 'recurso_criado') (eq this.acao 'recurso_atualizado') (eq this.acao 'recurso_excluido'))}}{{this.acao}}{{/unless}}
+                    </span>
+                </td>
+                <td style="font-family: monospace; font-size: 12px;">
+                    {{this.ip}}
+                </td>
+                <td style="max-width: 300px;">
+                    {{#if this.detalhes}}
+                        <div style="font-size: 12px; background-color: #f8f9fa; padding: 5px; border-radius: 3px; overflow: hidden;">
+                            {{#if this.detalhes.titulo}}
+                                <strong>Título:</strong> {{this.detalhes.titulo}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.nome}}
+                                <strong>Nome:</strong> {{this.detalhes.nome}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.local}}
+                                <strong>Local:</strong> {{this.detalhes.local}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.espacoId}}
+                                <strong>Espaço ID:</strong> {{this.detalhes.espacoId}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.tipo}}
+                                <strong>Tipo:</strong> {{this.detalhes.tipo}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.quantidade}}
+                                <strong>Quantidade:</strong> {{this.detalhes.quantidade}}<br>
+                            {{/if}}
+                            {{#if this.detalhes.userAgent}}
+                                <strong>User Agent:</strong> <span style="font-size: 10px;">{{this.detalhes.userAgent}}</span>
+                            {{/if}}
+                            {{#if this.detalhes.id}}
+                                <strong>ID:</strong> {{this.detalhes.id}}
+                            {{/if}}
+                        </div>
+                    {{else}}
+                        <span style="color: #999; font-style: italic;">Sem detalhes</span>
+                    {{/if}}
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
+    <h4 style="margin-top: 0;">Estatísticas dos Logs:</h4>
+    <p><strong>Total de registros:</strong> {{logs.length}}</p>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+        <small style="padding: 4px 8px; background-color: #3498db; color: white; border-radius: 12px;">🔐 Login</small>
+        <small style="padding: 4px 8px; background-color: #27ae60; color: white; border-radius: 12px;">📅 Reservas</small>
+        <small style="padding: 4px 8px; background-color: #9b59b6; color: white; border-radius: 12px;">👥 Usuários</small>
+        <small style="padding: 4px 8px; background-color: #1abc9c; color: white; border-radius: 12px;">🏢 Espaços</small>
+        <small style="padding: 4px 8px; background-color: #16a085; color: white; border-radius: 12px;">🔧 Recursos</small>
+    </div>
+</div>
+
+{{else}}
+<div style="text-align: center; margin-top: 50px; padding: 40px; background-color: #f8f9fa; border-radius: 8px;">
+    <h3 style="color: #666;">Nenhum log registrado</h3>
+    <p style="color: #999;">Os logs aparecerão aqui conforme as atividades do sistema acontecerem.</p>
+</div>
+{{/if}}

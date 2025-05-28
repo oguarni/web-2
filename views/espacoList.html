@@ -1,0 +1,48 @@
+<h2>Espaços Cadastrados</h2>
+
+<div style="margin-bottom: 20px;">
+    <a href="/espacoCreate"><button style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Novo Espaço</button></a>
+</div>
+
+{{#if espacos.length}}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Capacidade</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each espacos}}
+        <tr>
+            <td>{{this.id}}</td>
+            <td>{{this.nome}}</td>
+            <td>
+                {{#if (eq this.tipo "sala")}}Sala de Reunião{{/if}}
+                {{#if (eq this.tipo "auditorio")}}Auditório{{/if}}
+                {{#if (eq this.tipo "quadra")}}Quadra Esportiva{{/if}}
+                {{#if (eq this.tipo "coworking")}}Espaço Coworking{{/if}}
+            </td>
+            <td>{{this.capacidade}} pessoas</td>
+            <td>
+                {{#if this.ativo}}
+                    <span style="color: green;">Ativo</span>
+                {{else}}
+                    <span style="color: red;">Inativo</span>
+                {{/if}}
+            </td>
+            <td>
+                <a href="/espacoUpdate/{{this.id}}"><button style="background-color: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button></a>
+                <a href="/espacoDelete/{{this.id}}"><button style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Excluir</button></a>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+{{else}}
+<p>Nenhum espaço cadastrado.</p>
+{{/if}}

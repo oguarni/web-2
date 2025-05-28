@@ -21,17 +21,25 @@ module.exports = (sequelize, Sequelize) => {
         descricao: {
             type: Sequelize.TEXT
         },
-        local: {
-            type: Sequelize.STRING,
-            allowNull: false
-        },
         status: {
             type: Sequelize.ENUM('confirmada', 'pendente', 'cancelada'),
             defaultValue: 'pendente'
         },
         usuarioId: {
             type: Sequelize.INTEGER, 
-            allowNull: false
+            allowNull: false,
+            references: {
+                model: 'usuarios',
+                key: 'id'
+            }
+        },
+        espacoId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'espacos',
+                key: 'id'
+            }
         }
     });
     return Reserva;

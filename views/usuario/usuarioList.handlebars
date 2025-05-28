@@ -1,0 +1,53 @@
+<h2>Usuários Cadastrados</h2>
+
+<div style="margin-bottom: 20px;">
+    <a href="/usuarioCreate"><button style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Novo Usuário</button></a>
+</div>
+
+{{#if usuarios.length}}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Login</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each usuarios}}
+        <tr>
+            <td>{{this.id}}</td>
+            <td>{{this.nome}}</td>
+            <td>{{this.login}}</td>
+            <td>{{this.email}}</td>
+            <td>{{this.telefone}}</td>
+            <td>
+                {{#if (eq this.tipo 1)}}
+                    <span style="color: #e74c3c; font-weight: bold;">Administrador</span>
+                {{else}}
+                    <span style="color: #3498db;">Usuário Comum</span>
+                {{/if}}
+            </td>
+            <td>
+                {{#if this.ativo}}
+                    <span style="color: green;">Ativo</span>
+                {{else}}
+                    <span style="color: red;">Inativo</span>
+                {{/if}}
+            </td>
+            <td>
+                <a href="/usuarioUpdate/{{this.id}}"><button style="background-color: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">Editar</button></a>
+                <a href="/usuarioDelete/{{this.id}}"><button style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Excluir</button></a>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+{{else}}
+<p style="text-align: center; margin-top: 50px; color: #666;">Nenhum usuário cadastrado.</p>
+{{/if}}

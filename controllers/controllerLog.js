@@ -4,9 +4,9 @@ const Log = require('../models/noSql/log');
 
 // Conectar ao MongoDB
 mongoose.connect(db_mongoose.connection).then(() => {
-    console.log('Conectado ao MongoDB');
+    console.log('🍃 Conectado ao MongoDB LOCAL');
 }).catch((err) => {
-    console.log('Erro na conexão com o MongoDB:', err);
+    console.log('❌ Erro na conexão com o MongoDB:', err);
 });
 
 module.exports = {
@@ -21,9 +21,10 @@ module.exports = {
             });
             
             await novoLog.save();
+            console.log(`📝 Log salvo: ${acao} - Usuário ${usuarioId}`);
             return true;
         } catch (err) {
-            console.log('Erro ao registrar log:', err);
+            console.log('❌ Erro ao registrar log:', err);
             return false;
         }
     },
@@ -36,12 +37,12 @@ module.exports = {
             res.render('log/logList', { 
                 logs: logs.map(log => ({
                     ...log.toObject(),
-                    timestampFormatado: new Date(log.timestamp).toLocaleString()
+                    timestampFormatado: new Date(log.timestamp).toLocaleString('pt-BR')
                 }))
             });
         } catch (err) {
-            console.log(err);
+            console.log('❌ Erro ao buscar logs:', err);
             res.redirect('/home');
         }
     }
-}
+};

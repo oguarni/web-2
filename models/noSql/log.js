@@ -18,7 +18,7 @@ const LogSchema = new Schema({
         type: String 
     },
     detalhes: { 
-        type: Object 
+        type: Schema.Types.Mixed 
     }
 });
 

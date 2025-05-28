@@ -1,0 +1,27 @@
+{{#if erro}}
+    <div style="color: red; background-color: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        {{erro}}
+    </div>
+{{/if}}
+
+<h2>Excluir Recurso</h2>
+
+<div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <p style="margin: 0;"><strong>Atenção!</strong> Você está prestes a excluir o recurso abaixo. Esta ação não pode ser desfeita.</p>
+</div>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+    <p><strong>ID:</strong> {{recurso.id}}</p>
+    <p><strong>Nome:</strong> {{recurso.nome}}</p>
+    <p><strong>Descrição:</strong> {{recurso.descricao}}</p>
+    <p><strong>Quantidade:</strong> {{recurso.quantidade}}</p>
+</div>
+
+<form action="/recursoDelete" method="post">
+    <input type="hidden" name="id" value="{{recurso.id}}">
+    
+    <div style="display: flex; gap: 10px;">
+        <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Confirmar Exclusão</button>
+        <a href="/recursoList"><button type="button" style="background-color: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancelar</button></a>
+    </div>
+</form>

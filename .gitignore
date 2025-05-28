@@ -1,7 +1,0 @@
-node_modules/
-*.log
-*.swp
-*.class
-# Arquivos de IDE
-.idea/  # Para IntelliJ
-.vscode/  # Para VS Code

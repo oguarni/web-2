@@ -1,0 +1,58 @@
+{{#if erro}}
+    <div style="color: red; background-color: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        {{erro}}
+    </div>
+{{/if}}
+
+<h2>Editar Usuário</h2>
+
+<form action="/usuarioUpdate" method="post">
+    <input type="hidden" name="id" value="{{usuario.id}}">
+    
+    <div style="margin-bottom: 15px;">
+        <label for="nome" style="display: block; margin-bottom: 5px; font-weight: bold;">Nome Completo:</label>
+        <input type="text" id="nome" name="nome" value="{{usuario.nome}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="login" style="display: block; margin-bottom: 5px; font-weight: bold;">Login:</label>
+        <input type="text" id="login" name="login" value="{{usuario.login}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="senha" style="display: block; margin-bottom: 5px; font-weight: bold;">Nova Senha:</label>
+        <input type="password" id="senha" name="senha" value="{{usuario.senha}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+        <small style="color: #666;">Deixe em branco para manter a senha atual</small>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="email" style="display: block; margin-bottom: 5px; font-weight: bold;">E-mail:</label>
+        <input type="email" id="email" name="email" value="{{usuario.email}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="telefone" style="display: block; margin-bottom: 5px; font-weight: bold;">Telefone:</label>
+        <input type="text" id="telefone" name="telefone" value="{{usuario.telefone}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="(00) 00000-0000">
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="tipo" style="display: block; margin-bottom: 5px; font-weight: bold;">Tipo de Usuário:</label>
+        <select id="tipo" name="tipo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+            <option value="2" {{#if (eq usuario.tipo 2)}}selected{{/if}}>Usuário Comum</option>
+            <option value="1" {{#if (eq usuario.tipo 1)}}selected{{/if}}>Administrador</option>
+        </select>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="ativo" style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
+        <select id="ativo" name="ativo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="true" {{#if usuario.ativo}}selected{{/if}}>Ativo</option>
+            <option value="false" {{#unless usuario.ativo}}selected{{/unless}}>Inativo</option>
+        </select>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+        <button type="submit" style="background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Atualizar</button>
+        <a href="/usuarioList"><button type="button" style="background-color: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancelar</button></a>
+    </div>
+</form>
