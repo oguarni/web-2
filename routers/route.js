@@ -2,12 +2,14 @@ const express = require('express');
 const db = require('../config/db_sequelize');
 const controllerUsuario = require('../controllers/controllerUsuario');
 const controllerReserva = require('../controllers/controllerReserva');
+const controllerEspaco = require('../controllers/controllerEspaco');
+const controllerRecurso = require('../controllers/controllerRecurso');
 const controllerLog = require('../controllers/controllerLog');
 const { isAuthenticated, isAdmin, isOwnerOrAdmin } = require('../middlewares/auth');
 const route = express.Router();
 
 // Cria as tabelas no banco de dados - descomentar para a primeira execução
-
+/*
 db.sequelize.sync({force: true}).then(async () => {
     console.log('{ force: true }');
     
@@ -97,16 +99,17 @@ db.sequelize.sync({force: true}).then(async () => {
     
     console.log('Dados iniciais criados com sucesso!');
 });
+*/
 
 module.exports = route;
 
 // Home
+route.get("/", controllerUsuario.getLogin);
 route.get("/home", isAuthenticated, function(req, res) { 
     res.render('home') 
 });
 
 // Controller Usuario - Login/Logout
-route.get("/", controllerUsuario.getLogin);
 route.post("/login", controllerUsuario.postLogin);
 route.get("/logout", controllerUsuario.getLogout);
 
@@ -118,14 +121,34 @@ route.get("/usuarioUpdate/:id", isAuthenticated, isAdmin, controllerUsuario.getU
 route.post("/usuarioUpdate", isAuthenticated, isAdmin, controllerUsuario.postUpdate);
 route.get("/usuarioDelete/:id", isAuthenticated, isAdmin, controllerUsuario.getDelete);
 
-// Controller Reserva (todos podem criar reservas, mas só podem ver/editar as próprias - admin vê todas)
+// Controller Espaço - CRUD (apenas admin)
+route.get("/espacoCreate", isAuthenticated, isAdmin, controllerEspaco.getCreate);
+route.post("/espacoCreate", isAuthenticated, isAdmin, controllerEspaco.postCreate);
+route.get("/espacoList", isAuthenticated, isAdmin, controllerEspaco.getList);
+route.get("/espacoUpdate/:id", isAuthenticated, isAdmin, controllerEspaco.getUpdate);
+route.post("/espacoUpdate", isAuthenticated, isAdmin, controllerEspaco.postUpdate);
+route.get("/espacoDelete/:id", isAuthenticated, isAdmin, controllerEspaco.getDelete);
+route.post("/espacoDelete", isAuthenticated, isAdmin, controllerEspaco.postDelete);
+
+// Controller Recurso - CRUD (apenas admin)
+route.get("/recursoCreate", isAuthenticated, isAdmin, controllerRecurso.getCreate);
+route.post("/recursoCreate", isAuthenticated, isAdmin, controllerRecurso.postCreate);
+route.get("/recursoList", isAuthenticated, isAdmin, controllerRecurso.getList);
+route.get("/recursoUpdate/:id", isAuthenticated, isAdmin, controllerRecurso.getUpdate);
+route.post("/recursoUpdate", isAuthenticated, isAdmin, controllerRecurso.postUpdate);
+route.get("/recursoDelete/:id", isAuthenticated, isAdmin, controllerRecurso.getDelete);
+route.post("/recursoDelete", isAuthenticated, isAdmin, controllerRecurso.postDelete);
+route.get("/api/recurso/disponibilidade", isAuthenticated, controllerRecurso.checkDisponibilidade);
+
+// Controller Reserva - CRUD
 route.get("/reservaCreate", isAuthenticated, controllerReserva.getCreate);
 route.post("/reservaCreate", isAuthenticated, controllerReserva.postCreate);
 route.get("/reservaList", isAuthenticated, controllerReserva.getList);
 route.get("/reservaUpdate/:id", isAuthenticated, isOwnerOrAdmin, controllerReserva.getUpdate);
 route.post("/reservaUpdate", isAuthenticated, isOwnerOrAdmin, controllerReserva.postUpdate);
 route.get("/reservaDelete/:id", isAuthenticated, isOwnerOrAdmin, controllerReserva.getDelete);
+route.post("/reservaDelete", isAuthenticated, isOwnerOrAdmin, controllerReserva.postDelete);
 route.get("/reservaChangeStatus/:id/:status", isAuthenticated, isAdmin, controllerReserva.getChangeStatus);
 
-// Controller Log (apenas admin)
+// Controller Log - List (apenas admin)
 route.get("/logList", isAuthenticated, isAdmin, controllerLog.getList);

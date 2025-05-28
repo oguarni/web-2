@@ -1,0 +1,35 @@
+<h2>Recursos Cadastrados</h2>
+
+<div style="margin-bottom: 20px;">
+    <a href="/recursoCreate"><button style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Novo Recurso</button></a>
+</div>
+
+{{#if recursos.length}}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Quantidade</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each recursos}}
+        <tr>
+            <td>{{this.id}}</td>
+            <td>{{this.nome}}</td>
+            <td>{{this.descricao}}</td>
+            <td>{{this.quantidade}}</td>
+            <td>
+                <a href="/recursoUpdate/{{this.id}}"><button style="background-color: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button></a>
+                <a href="/recursoDelete/{{this.id}}"><button style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Excluir</button></a>
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+{{else}}
+<p>Nenhum recurso cadastrado.</p>
+{{/if}}
