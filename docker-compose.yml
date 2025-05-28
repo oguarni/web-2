@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - mongodb
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_NAME=web2_db
+      - DB_USER=postgres
+      - DB_PASS=1234
+      - MONGO_URI=mongodb://mongodb:27017/reservas_db
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=web2_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    environment:
+      - MONGO_INITDB_DATABASE=reservas_db
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongodb_data:
