@@ -1,0 +1,51 @@
+{{#if erro}}
+    <div style="color: red; background-color: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        {{erro}}
+    </div>
+{{/if}}
+
+<h2>Editar Espaço</h2>
+
+<form action="/espacoUpdate" method="post">
+    <input type="hidden" name="id" value="{{espaco.id}}">
+    
+    <div style="margin-bottom: 15px;">
+        <label for="nome" style="display: block; margin-bottom: 5px; font-weight: bold;">Nome do Espaço:</label>
+        <input type="text" id="nome" name="nome" value="{{espaco.nome}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="descricao" style="display: block; margin-bottom: 5px; font-weight: bold;">Descrição:</label>
+        <textarea id="descricao" name="descricao" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Descreva as características e equipamentos do espaço...">{{espaco.descricao}}</textarea>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="capacidade" style="display: block; margin-bottom: 5px; font-weight: bold;">Capacidade:</label>
+        <input type="number" id="capacidade" name="capacidade" min="1" value="{{espaco.capacidade}}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+        <small style="color: #666;">Número máximo de pessoas que o espaço comporta</small>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="tipo" style="display: block; margin-bottom: 5px; font-weight: bold;">Tipo:</label>
+        <select id="tipo" name="tipo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+            <option value="sala" {{#if (eq espaco.tipo "sala")}}selected{{/if}}>Sala de Reunião</option>
+            <option value="auditorio" {{#if (eq espaco.tipo "auditorio")}}selected{{/if}}>Auditório</option>
+            <option value="quadra" {{#if (eq espaco.tipo "quadra")}}selected{{/if}}>Quadra Esportiva</option>
+            <option value="coworking" {{#if (eq espaco.tipo "coworking")}}selected{{/if}}>Espaço Coworking</option>
+        </select>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="ativo" style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
+        <select id="ativo" name="ativo" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="true" {{#if espaco.ativo}}selected{{/if}}>Ativo</option>
+            <option value="false" {{#unless espaco.ativo}}selected{{/unless}}>Inativo</option>
+        </select>
+        <small style="color: #666;">Espaços inativos não aparecem para reserva</small>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+        <button type="submit" style="background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Atualizar</button>
+        <a href="/espacoList"><button type="button" style="background-color: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancelar</button></a>
+    </div>
+</form>

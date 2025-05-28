@@ -1,0 +1,111 @@
+<h2>{{#if isAdmin}}Todas as Reservas{{else}}Minhas Reservas{{/if}}</h2>
+
+<div style="margin-bottom: 20px;">
+    <a href="/reservaCreate"><button style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Nova Reserva</button></a>
+</div>
+
+{{#if reservas.length}}
+<div style="overflow-x: auto;">
+    <table style="min-width: 100%;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Espaço</th>
+                {{#if isAdmin}}<th>Usuário</th>{{/if}}
+                <th>Data Início</th>
+                <th>Data Fim</th>
+                <th>Status</th>
+                <th>Recursos</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each reservas}}
+            <tr>
+                <td>{{this.id}}</td>
+                <td>{{this.titulo}}</td>
+                <td>{{this.espaco.nome}}</td>
+                {{#if ../isAdmin}}<td>{{this.usuario.nome}}</td>{{/if}}
+                <td>{{this.dataInicioFormatada}}</td>
+                <td>{{this.dataFimFormatada}}</td>
+                <td>
+                    {{#if (eq this.status "confirmada")}}
+                        <span style="background-color: #27ae60; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Confirmada</span>
+                    {{else if (eq this.status "pendente")}}
+                        <span style="background-color: #f39c12; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Pendente</span>
+                    {{else}}
+                        <span style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Cancelada</span>
+                    {{/if}}
+                </td>
+                <td>
+                    {{#if this.recursos.length}}
+                        <div style="font-size: 12px;">
+                            {{#each this.recursos}}
+                                <div>{{this.nome}} ({{this.ReservaRecurso.quantidade}})</div>
+                            {{/each}}
+                        </div>
+                    {{else}}
+                        <span style="color: #999;">Nenhum</span>
+                    {{/if}}
+                </td>
+                <td>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <a href="/reservaUpdate/{{this.id}}">
+                            <button style="background-color: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Editar</button>
+                        </a>
+                        
+                        <a href="/reservaDelete/{{this.id}}">
+                            <button style="background-color: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Excluir</button>
+                        </a>
+                        
+                        {{#if ../isAdmin}}
+                            {{#if (eq this.status "pendente")}}
+                                <a href="/reservaChangeStatus/{{this.id}}/confirmada">
+                                    <button style="background-color: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Confirmar</button>
+                                </a>
+                            {{/if}}
+                            
+                            {{#unless (eq this.status "cancelada")}}
+                                <a href="/reservaChangeStatus/{{this.id}}/cancelada">
+                                    <button style="background-color: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Cancelar</button>
+                                </a>
+                            {{/unless}}
+                        {{/if}}
+                    </div>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
+    <h4 style="margin-top: 0;">Legenda:</h4>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="background-color: #27ae60; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Confirmada</span>
+            <span>Reserva aprovada</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="background-color: #f39c12; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Pendente</span>
+            <span>Aguardando aprovação</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">Cancelada</span>
+            <span>Reserva cancelada</span>
+        </div>
+    </div>
+</div>
+
+{{else}}
+<div style="text-align: center; margin-top: 50px; padding: 40px; background-color: #f8f9fa; border-radius: 8px;">
+    <h3 style="color: #666;">Nenhuma reserva encontrada</h3>
+    <p style="color: #999;">{{#if isAdmin}}Não há reservas no sistema.{{else}}Você ainda não possui reservas.{{/if}}</p>
+    <a href="/reservaCreate">
+        <button style="background-color: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; margin-top: 15px;">
+            Criar Primeira Reserva
+        </button>
+    </a>
+</div>
+{{/if}}
