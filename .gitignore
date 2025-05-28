@@ -1,7 +1,43 @@
+# Dependencies
 node_modules/
+package-lock.json
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
 *.swp
-*.class
-# Arquivos de IDE
-.idea/  # Para IntelliJ
-.vscode/  # Para VS Code
+*.swo
+
+# Docker
+.dockerignore
+
+# Backups
+backups/
+*.backup
+package-lock.json
+package-lock.json
+package-lock.json
+
+# Dependencies
+package-lock.json
+package.json
