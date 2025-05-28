@@ -9,7 +9,7 @@ const { isAuthenticated, isAdmin, isOwnerOrAdmin } = require('../middlewares/aut
 const route = express.Router();
 
 // Cria as tabelas no banco de dados - descomentar para a primeira execução
-/*
+
 db.sequelize.sync({force: true}).then(async () => {
     console.log('{ force: true }');
     
@@ -99,7 +99,6 @@ db.sequelize.sync({force: true}).then(async () => {
     
     console.log('Dados iniciais criados com sucesso!');
 });
-*/
 
 module.exports = route;
 
