@@ -86,7 +86,7 @@ Usuario (1) -----> (N) Reserva
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/oguarni/sistema-reservas-espacos.git
+git clone https://github.com/oguarni/web-2.git
 cd sistema-reservas-espacos
 ```
 
