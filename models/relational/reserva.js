@@ -21,15 +21,15 @@ module.exports = (sequelize, Sequelize) => {
         descricao: {
             type: Sequelize.TEXT
         },
-        local: {
-            type: Sequelize.STRING,
-            allowNull: false
-        },
         status: {
             type: Sequelize.ENUM('confirmada', 'pendente', 'cancelada'),
             defaultValue: 'pendente'
         },
         usuarioId: {
+            type: Sequelize.INTEGER, 
+            allowNull: false
+        },
+        espacoId: {
             type: Sequelize.INTEGER, 
             allowNull: false
         }

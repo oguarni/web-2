@@ -8,12 +8,16 @@ var db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// Importação dos modelos
+// Import relational models
 db.Usuario = require('../models/relational/usuario.js')(sequelize, Sequelize);
 db.Reserva = require('../models/relational/reserva.js')(sequelize, Sequelize);
+db.Espaco = require('../models/relational/espaco.js')(sequelize, Sequelize);
 
-// Relacionamento 1:N entre Usuario e Reserva
+// Define relationships
 db.Usuario.hasMany(db.Reserva, { foreignKey: 'usuarioId', onDelete: 'NO ACTION' });
 db.Reserva.belongsTo(db.Usuario, { foreignKey: 'usuarioId' });
+
+db.Espaco.hasMany(db.Reserva, { foreignKey: 'espacoId', onDelete: 'NO ACTION' });
+db.Reserva.belongsTo(db.Espaco, { foreignKey: 'espacoId' });
 
 module.exports = db;
