@@ -1,315 +1,177 @@
 const db = require('../../config/db_sequelize');
 const { Op } = require('sequelize');
+const { asyncHandler, NotFoundError, ConflictError, ValidationError, ForbiddenError } = require('../../middlewares/errorHandler');
+const { getUserBasedWhereClause, ensureCanAccessResource, isAdmin } = require('../../middlewares/authHelpers');
 
 module.exports = {
     // GET /api/reservas
-    async index(req, res) {
-        try {
-            let where = {};
-            
-            // Security: Non-admin users (type !== 1) can only see their own reservations
-            if (req.user.type !== 1) {
-                where.usuarioId = req.user.id;
-            }
-            
-            const reservas = await db.Reserva.findAll({
-                where,
-                include: [
-                    { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
-                    { model: db.Espaco, attributes: ['id', 'nome', 'localizacao'] }
-                ],
-                order: [['dataInicio', 'DESC']]
-            });
-            
-            res.json({
-                success: true,
-                data: reservas
-            });
-        } catch (error) {
-            console.error('Error fetching reservations:', error);
-            res.status(500).json({
-                error: 'Failed to fetch reservations'
-            });
-        }
-    },
+    index: asyncHandler(async (req, res) => {
+        const where = getUserBasedWhereClause(req);
+        
+        const reservas = await db.Reserva.findAll({
+            where,
+            include: [
+                { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, attributes: ['id', 'nome', 'localizacao'] }
+            ],
+            order: [['dataInicio', 'DESC']]
+        });
+        
+        res.json({
+            success: true,
+            data: reservas
+        });
+    }),
     
     // GET /api/reservas/:id
-    async show(req, res) {
-        try {
-            const { id } = req.params;
-            let where = { id };
-            
-            // Security: Non-admin users (type !== 1) can only access their own reservations
-            if (req.user.type !== 1) {
-                where.usuarioId = req.user.id;
-            }
-            
-            const reserva = await db.Reserva.findOne({
-                where,
-                include: [
-                    { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
-                    { model: db.Espaco, attributes: ['id', 'nome', 'localizacao', 'capacidade'] }
-                ]
-            });
-            
-            if (!reserva) {
-                return res.status(404).json({
-                    error: 'Reservation not found'
-                });
-            }
-            
-            // Security: Double-check ownership for non-admin users  
-            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
-                return res.status(403).json({
-                    error: 'Access denied: You can only view your own reservations'
-                });
-            }
-            
-            res.json({
-                success: true,
-                data: reserva
-            });
-        } catch (error) {
-            console.error('Error fetching reservation:', error);
-            res.status(500).json({
-                error: 'Failed to fetch reservation'
-            });
+    show: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        
+        const reserva = await db.Reserva.findByPk(id, {
+            include: [
+                { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, attributes: ['id', 'nome', 'localizacao', 'capacidade'] }
+            ]
+        });
+        
+        if (!reserva) {
+            throw new NotFoundError('Reservation not found');
         }
-    },
+        
+        // Security: Ensure user can access this reservation
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
+        
+        res.json({
+            success: true,
+            data: reserva
+        });
+    }),
     
     // POST /api/reservas
-    async create(req, res) {
-        try {
-            const { titulo, dataInicio, dataFim, descricao, espacoId } = req.body;
-            
-            if (!titulo || !dataInicio || !dataFim || !espacoId) {
-                return res.status(400).json({
-                    error: 'Title, start date, end date and space are required'
-                });
-            }
-            
-            // Validate dates
-            const startDate = new Date(dataInicio);
-            const endDate = new Date(dataFim);
-            
-            if (startDate >= endDate) {
-                return res.status(400).json({
-                    error: 'End date must be after start date'
-                });
-            }
-            
-            if (startDate < new Date()) {
-                return res.status(400).json({
-                    error: 'Start date cannot be in the past'
-                });
-            }
-            
-            // Check if space exists
-            const espaco = await db.Espaco.findByPk(espacoId);
-            if (!espaco || !espaco.ativo) {
-                return res.status(404).json({
-                    error: 'Space not found or inactive'
-                });
-            }
-            
-            // Check for conflicting reservations
-            const conflictingReservations = await db.Reserva.findAll({
-                where: {
-                    espacoId,
-                    status: 'confirmada',
-                    [Op.or]: [
-                        {
-                            dataInicio: {
-                                [Op.between]: [dataInicio, dataFim]
-                            }
-                        },
-                        {
-                            dataFim: {
-                                [Op.between]: [dataInicio, dataFim]
-                            }
-                        },
-                        {
-                            [Op.and]: [
-                                { dataInicio: { [Op.lte]: dataInicio } },
-                                { dataFim: { [Op.gte]: dataFim } }
-                            ]
-                        }
-                    ]
-                }
-            });
-            
-            if (conflictingReservations.length > 0) {
-                return res.status(409).json({
-                    error: 'Space is already reserved for this time period'
-                });
-            }
-            
-            const reserva = await db.Reserva.create({
-                titulo,
-                dataInicio,
-                dataFim,
-                descricao,
+    create: asyncHandler(async (req, res) => {
+        const { titulo, dataInicio, dataFim, descricao, espacoId } = req.body;
+        
+        // Check if space exists and is active
+        const espaco = await db.Espaco.findByPk(espacoId);
+        if (!espaco || !espaco.ativo) {
+            throw new NotFoundError('Space not found or inactive');
+        }
+        
+        // Check for conflicting reservations
+        const conflictingReservations = await db.Reserva.findAll({
+            where: {
                 espacoId,
-                usuarioId: req.user.id,
-                status: 'pendente'
-            });
+                status: 'confirmada',
+                [Op.or]: [
+                    {
+                        dataInicio: {
+                            [Op.between]: [dataInicio, dataFim]
+                        }
+                    },
+                    {
+                        dataFim: {
+                            [Op.between]: [dataInicio, dataFim]
+                        }
+                    },
+                    {
+                        [Op.and]: [
+                            { dataInicio: { [Op.lte]: dataInicio } },
+                            { dataFim: { [Op.gte]: dataFim } }
+                        ]
+                    }
+                ]
+            }
+        });
+        
+        if (conflictingReservations.length > 0) {
+            throw new ConflictError('Space is already reserved for this time period');
+        }
+        
+        const reserva = await db.Reserva.create({
+            titulo,
+            dataInicio,
+            dataFim,
+            descricao,
+            espacoId,
+            usuarioId: req.user.id,
+            status: 'pendente'
+        });
             
             // Log reservation creation
             
-            res.status(201).json({
-                success: true,
-                data: reserva
-            });
-        } catch (error) {
-            console.error('Error creating reservation:', error);
-            res.status(500).json({
-                error: 'Failed to create reservation'
-            });
-        }
-    },
+        res.status(201).json({
+            success: true,
+            data: reserva
+        });
+    }),
     
     // PUT /api/reservas/:id
-    async update(req, res) {
-        try {
-            const { id } = req.params;
-            const { titulo, dataInicio, dataFim, descricao, status } = req.body;
-            
-            let where = { id };
-            
-            // Security: Non-admin users (type !== 1) can only update their own reservations
-            if (req.user.type !== 1) {
-                where.usuarioId = req.user.id;
-            }
-            
-            const reserva = await db.Reserva.findOne({ where });
-            if (!reserva) {
-                return res.status(404).json({
-                    error: 'Reservation not found'
-                });
-            }
-            
-            // Security: Only administrators can change reservation status
-            if (status && req.user.type !== 1) {
-                return res.status(403).json({
-                    error: 'Only administrators can change reservation status'
-                });
-            }
-            
-            // Security: Prevent non-owners from updating reservations even if they somehow bypass the where clause
-            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
-                return res.status(403).json({
-                    error: 'Access denied: You can only update your own reservations'
-                });
-            }
-            
-            // Validate dates if provided
-            if (dataInicio || dataFim) {
-                const startDate = new Date(dataInicio || reserva.dataInicio);
-                const endDate = new Date(dataFim || reserva.dataFim);
-                
-                if (startDate >= endDate) {
-                    return res.status(400).json({
-                        error: 'End date must be after start date'
-                    });
-                }
-            }
-            
-            await reserva.update({
-                titulo: titulo || reserva.titulo,
-                dataInicio: dataInicio || reserva.dataInicio,
-                dataFim: dataFim || reserva.dataFim,
-                descricao: descricao || reserva.descricao,
-                status: status || reserva.status
-            });
-            
-            // Log reservation update
-            
-            res.json({
-                success: true,
-                data: reserva
-            });
-        } catch (error) {
-            console.error('Error updating reservation:', error);
-            res.status(500).json({
-                error: 'Failed to update reservation'
-            });
+    update: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { titulo, dataInicio, dataFim, descricao, status } = req.body;
+        
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
+            throw new NotFoundError('Reservation not found');
         }
-    },
+        
+        // Security: Only administrators can change reservation status
+        if (status && !isAdmin(req)) {
+            throw new ForbiddenError('Only administrators can change reservation status');
+        }
+        
+        // Security: Ensure user can access this reservation
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
+        
+        await reserva.update({
+            titulo: titulo || reserva.titulo,
+            dataInicio: dataInicio || reserva.dataInicio,
+            dataFim: dataFim || reserva.dataFim,
+            descricao: descricao || reserva.descricao,
+            status: status || reserva.status
+        });
+        
+        res.json({
+            success: true,
+            data: reserva
+        });
+    }),
     
     // DELETE /api/reservas/:id
-    async delete(req, res) {
-        try {
-            const { id } = req.params;
-            
-            let where = { id };
-            
-            // Security: Non-admin users (type !== 1) can only delete their own reservations
-            if (req.user.type !== 1) {
-                where.usuarioId = req.user.id;
-            }
-            
-            const reserva = await db.Reserva.findOne({ where });
-            if (!reserva) {
-                return res.status(404).json({
-                    error: 'Reservation not found'
-                });
-            }
-            
-            // Security: Double-check ownership for non-admin users
-            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
-                return res.status(403).json({
-                    error: 'Access denied: You can only delete your own reservations'
-                });
-            }
-            
-            await reserva.destroy();
-            
-            // Log reservation deletion
-            
-            res.json({
-                success: true,
-                message: 'Reservation deleted successfully'
-            });
-        } catch (error) {
-            console.error('Error deleting reservation:', error);
-            res.status(500).json({
-                error: 'Failed to delete reservation'
-            });
+    delete: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
+            throw new NotFoundError('Reservation not found');
         }
-    },
+        
+        // Security: Ensure user can access this reservation
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
+        
+        await reserva.destroy();
+        
+        res.json({
+            success: true,
+            message: 'Reservation deleted successfully'
+        });
+    }),
     
     // PUT /api/reservas/:id/status
-    async updateStatus(req, res) {
-        try {
-            const { id } = req.params;
-            const { status } = req.body;
-            
-            if (!['confirmada', 'pendente', 'cancelada'].includes(status)) {
-                return res.status(400).json({
-                    error: 'Invalid status. Must be: confirmada, pendente, or cancelada'
-                });
-            }
-            
-            const reserva = await db.Reserva.findByPk(id);
-            if (!reserva) {
-                return res.status(404).json({
-                    error: 'Reservation not found'
-                });
-            }
-            
-            await reserva.update({ status });
-            
-            // Log status change
-            
-            res.json({
-                success: true,
-                data: reserva
-            });
-        } catch (error) {
-            console.error('Error updating reservation status:', error);
-            res.status(500).json({
-                error: 'Failed to update reservation status'
-            });
+    updateStatus: asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
+            throw new NotFoundError('Reservation not found');
         }
-    }
+        
+        await reserva.update({ status });
+        
+        res.json({
+            success: true,
+            data: reserva
+        });
+    })
 };
