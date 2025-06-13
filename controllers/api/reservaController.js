@@ -7,7 +7,7 @@ module.exports = {
         try {
             let where = {};
             
-            // Non-admin users can only see their own reservations
+            // Security: Non-admin users (type !== 1) can only see their own reservations
             if (req.user.type !== 1) {
                 where.usuarioId = req.user.id;
             }
@@ -39,7 +39,7 @@ module.exports = {
             const { id } = req.params;
             let where = { id };
             
-            // Non-admin users can only see their own reservations
+            // Security: Non-admin users (type !== 1) can only access their own reservations
             if (req.user.type !== 1) {
                 where.usuarioId = req.user.id;
             }
@@ -55,6 +55,13 @@ module.exports = {
             if (!reserva) {
                 return res.status(404).json({
                     error: 'Reservation not found'
+                });
+            }
+            
+            // Security: Double-check ownership for non-admin users  
+            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
+                return res.status(403).json({
+                    error: 'Access denied: You can only view your own reservations'
                 });
             }
             
@@ -169,7 +176,7 @@ module.exports = {
             
             let where = { id };
             
-            // Non-admin users can only update their own reservations
+            // Security: Non-admin users (type !== 1) can only update their own reservations
             if (req.user.type !== 1) {
                 where.usuarioId = req.user.id;
             }
@@ -181,10 +188,17 @@ module.exports = {
                 });
             }
             
-            // Validate status change permissions
+            // Security: Only administrators can change reservation status
             if (status && req.user.type !== 1) {
                 return res.status(403).json({
                     error: 'Only administrators can change reservation status'
+                });
+            }
+            
+            // Security: Prevent non-owners from updating reservations even if they somehow bypass the where clause
+            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
+                return res.status(403).json({
+                    error: 'Access denied: You can only update your own reservations'
                 });
             }
             
@@ -229,7 +243,7 @@ module.exports = {
             
             let where = { id };
             
-            // Non-admin users can only delete their own reservations
+            // Security: Non-admin users (type !== 1) can only delete their own reservations
             if (req.user.type !== 1) {
                 where.usuarioId = req.user.id;
             }
@@ -238,6 +252,13 @@ module.exports = {
             if (!reserva) {
                 return res.status(404).json({
                     error: 'Reservation not found'
+                });
+            }
+            
+            // Security: Double-check ownership for non-admin users
+            if (req.user.type !== 1 && reserva.usuarioId !== req.user.id) {
+                return res.status(403).json({
+                    error: 'Access denied: You can only delete your own reservations'
                 });
             }
             
