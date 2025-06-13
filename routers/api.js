@@ -3,6 +3,13 @@ const router = express.Router();
 
 // Import middlewares
 const { validateToken, requireAdmin, requireOwnerOrAdmin } = require('../middlewares/tokenAuth');
+const { 
+    validateAuth, 
+    validateUser, 
+    validateSpace, 
+    validateReservation, 
+    validateLog 
+} = require('../middlewares/validation');
 
 // Import API controllers
 const authController = require('../controllers/api/authController');
@@ -51,7 +58,7 @@ const logController = require('../controllers/api/logController');
  *             example:
  *               error: "Credenciais inválidas"
  */
-router.post('/auth/login', authController.login);
+router.post('/auth/login', validateAuth.login, authController.login);
 
 // Protected routes - require valid token
 router.use(validateToken);
@@ -106,7 +113,7 @@ router.use(validateToken);
  *         description: Acesso negado - apenas administradores
  */
 router.get('/usuarios', requireAdmin, usuarioController.index);
-router.post('/usuarios', requireAdmin, usuarioController.create);
+router.post('/usuarios', requireAdmin, validateUser.create, usuarioController.create);
 
 /**
  * @swagger
@@ -195,9 +202,9 @@ router.post('/usuarios', requireAdmin, usuarioController.create);
  *       403:
  *         description: Acesso negado - apenas administradores
  */
-router.get('/usuarios/:id', requireAdmin, usuarioController.show);
-router.put('/usuarios/:id', requireAdmin, usuarioController.update);
-router.delete('/usuarios/:id', requireAdmin, usuarioController.delete);
+router.get('/usuarios/:id', requireAdmin, validateUser.idParam, usuarioController.show);
+router.put('/usuarios/:id', requireAdmin, validateUser.idParam, validateUser.update, usuarioController.update);
+router.delete('/usuarios/:id', requireAdmin, validateUser.idParam, usuarioController.delete);
 
 /**
  * @swagger
@@ -245,7 +252,7 @@ router.delete('/usuarios/:id', requireAdmin, usuarioController.delete);
  *         description: Token inválido ou ausente
  */
 router.get('/reservas', reservaController.index);
-router.post('/reservas', reservaController.create);
+router.post('/reservas', validateReservation.create, reservaController.create);
 
 /**
  * @swagger
@@ -334,9 +341,9 @@ router.post('/reservas', reservaController.create);
  *       403:
  *         description: Acesso negado
  */
-router.get('/reservas/:id', reservaController.show);
-router.put('/reservas/:id', reservaController.update);
-router.delete('/reservas/:id', reservaController.delete);
+router.get('/reservas/:id', validateReservation.idParam, reservaController.show);
+router.put('/reservas/:id', validateReservation.idParam, validateReservation.update, reservaController.update);
+router.delete('/reservas/:id', validateReservation.idParam, reservaController.delete);
 
 /**
  * @swagger
@@ -378,7 +385,7 @@ router.delete('/reservas/:id', reservaController.delete);
  *       403:
  *         description: Acesso negado - apenas administradores
  */
-router.put('/reservas/:id/status', requireAdmin, reservaController.updateStatus);
+router.put('/reservas/:id/status', requireAdmin, validateReservation.idParam, validateReservation.updateStatus, reservaController.updateStatus);
 
 /**
  * @swagger
@@ -434,8 +441,8 @@ router.put('/reservas/:id/status', requireAdmin, reservaController.updateStatus)
  *       403:
  *         description: Acesso negado - apenas administradores
  */
-router.get('/espacos', espacoController.index);
-router.post('/espacos', requireAdmin, espacoController.create);
+router.get('/espacos', validateSpace.filter, espacoController.index);
+router.post('/espacos', requireAdmin, validateSpace.create, espacoController.create);
 
 /**
  * @swagger
@@ -522,9 +529,9 @@ router.post('/espacos', requireAdmin, espacoController.create);
  *       403:
  *         description: Acesso negado - apenas administradores
  */
-router.get('/espacos/:id', espacoController.show);
-router.put('/espacos/:id', requireAdmin, espacoController.update);
-router.delete('/espacos/:id', requireAdmin, espacoController.delete);
+router.get('/espacos/:id', validateSpace.idParam, espacoController.show);
+router.put('/espacos/:id', requireAdmin, validateSpace.idParam, validateSpace.update, espacoController.update);
+router.delete('/espacos/:id', requireAdmin, validateSpace.idParam, espacoController.delete);
 
 /**
  * @swagger
@@ -597,14 +604,14 @@ router.delete('/espacos/:id', requireAdmin, espacoController.delete);
  *       401:
  *         description: Token inválido ou ausente
  */
-router.get('/espacos/:id/disponibilidade', espacoController.checkAvailability);
+router.get('/espacos/:id/disponibilidade', validateSpace.idParam, validateSpace.availability, espacoController.checkAvailability);
 
 // Log routes (admin only)
-router.get('/logs', requireAdmin, logController.index);
-router.get('/logs/:id', requireAdmin, logController.show);
-router.post('/logs', requireAdmin, logController.create);
-router.get('/logs/stats', requireAdmin, logController.getStats);
-router.delete('/logs/cleanup', requireAdmin, logController.cleanup);
+router.get('/logs', requireAdmin, validateLog.query, logController.index);
+router.get('/logs/:id', requireAdmin, validateLog.idParam, logController.show);
+router.post('/logs', requireAdmin, validateLog.create, logController.create);
+router.get('/logs/stats', requireAdmin, validateLog.query, logController.getStats);
+router.delete('/logs/cleanup', requireAdmin, validateLog.cleanup, logController.cleanup);
 
 // API documentation route
 router.get('/', (req, res) => {

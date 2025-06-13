@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 const apiRoutes = require('./routers/api');
+const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
 const app = express();
 
 // Middleware para processar JSON
@@ -39,6 +40,12 @@ app.get('/', (req, res) => {
         endpoints: '/api'
     });
 });
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
+app.use(errorHandler);
 
 // Iniciar servidor
 app.listen(8081, function(){
