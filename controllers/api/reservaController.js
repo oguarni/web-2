@@ -1,6 +1,5 @@
 const db = require('../../config/db_sequelize');
 const { Op } = require('sequelize');
-const controllerLog = require('../controllerLog');
 
 module.exports = {
     // GET /api/reservas
@@ -149,12 +148,6 @@ module.exports = {
             });
             
             // Log reservation creation
-            controllerLog.registrarLog(
-                req.user.id,
-                'reservation_created',
-                req.ip,
-                { reservationId: reserva.id, espacoId, titulo }
-            );
             
             res.status(201).json({
                 success: true,
@@ -216,12 +209,6 @@ module.exports = {
             });
             
             // Log reservation update
-            controllerLog.registrarLog(
-                req.user.id,
-                'reservation_updated',
-                req.ip,
-                { reservationId: id, changes: req.body }
-            );
             
             res.json({
                 success: true,
@@ -257,12 +244,6 @@ module.exports = {
             await reserva.destroy();
             
             // Log reservation deletion
-            controllerLog.registrarLog(
-                req.user.id,
-                'reservation_deleted',
-                req.ip,
-                { reservationId: id, titulo: reserva.titulo }
-            );
             
             res.json({
                 success: true,
@@ -298,12 +279,6 @@ module.exports = {
             await reserva.update({ status });
             
             // Log status change
-            controllerLog.registrarLog(
-                req.user.id,
-                'reservation_status_changed',
-                req.ip,
-                { reservationId: id, newStatus: status, oldStatus: reserva.status }
-            );
             
             res.json({
                 success: true,

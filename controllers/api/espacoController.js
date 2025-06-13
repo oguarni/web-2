@@ -1,5 +1,4 @@
 const db = require('../../config/db_sequelize');
-const controllerLog = require('../controllerLog');
 
 module.exports = {
     // GET /api/espacos
@@ -99,13 +98,6 @@ module.exports = {
                 ativo: true
             });
             
-            // Log space creation
-            controllerLog.registrarLog(
-                req.user.id,
-                'space_created',
-                req.ip,
-                { spaceId: espaco.id, spaceName: nome }
-            );
             
             res.status(201).json({
                 success: true,
@@ -160,13 +152,6 @@ module.exports = {
                 ativo: ativo !== undefined ? ativo : espaco.ativo
             });
             
-            // Log space update
-            controllerLog.registrarLog(
-                req.user.id,
-                'space_updated',
-                req.ip,
-                { spaceId: id, changes: req.body }
-            );
             
             res.json({
                 success: true,
@@ -209,13 +194,6 @@ module.exports = {
             
             await espaco.destroy();
             
-            // Log space deletion
-            controllerLog.registrarLog(
-                req.user.id,
-                'space_deleted',
-                req.ip,
-                { spaceId: id, spaceName: espaco.nome }
-            );
             
             res.json({
                 success: true,

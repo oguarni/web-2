@@ -1,5 +1,4 @@
 const db = require('../../config/db_sequelize');
-const controllerLog = require('../controllerLog');
 
 module.exports = {
     // GET /api/usuarios
@@ -75,12 +74,6 @@ module.exports = {
             });
             
             // Log user creation
-            controllerLog.registrarLog(
-                req.user.id,
-                'user_created',
-                req.ip,
-                { newUserId: usuario.id, newUserLogin: login }
-            );
             
             res.status(201).json({
                 success: true,
@@ -132,12 +125,6 @@ module.exports = {
             });
             
             // Log user update
-            controllerLog.registrarLog(
-                req.user.id,
-                'user_updated',
-                req.ip,
-                { updatedUserId: id }
-            );
             
             res.json({
                 success: true,
@@ -178,12 +165,6 @@ module.exports = {
             await usuario.destroy();
             
             // Log user deletion
-            controllerLog.registrarLog(
-                req.user.id,
-                'user_deleted',
-                req.ip,
-                { deletedUserId: id, deletedUserLogin: usuario.login }
-            );
             
             res.json({
                 success: true,

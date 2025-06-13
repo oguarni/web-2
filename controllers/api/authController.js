@@ -1,6 +1,5 @@
 const db = require('../../config/db_sequelize');
 const { createToken } = require('../../middlewares/tokenAuth');
-const controllerLog = require('../controllerLog');
 
 module.exports = {
     // POST /api/auth/login
@@ -26,14 +25,6 @@ module.exports = {
             
             // Create token
             const token = createToken(usuario.id, usuario.tipo);
-            
-            // Log login attempt
-            controllerLog.registrarLog(
-                usuario.id,
-                'api_login',
-                req.ip,
-                { userAgent: req.headers['user-agent'] }
-            );
             
             res.json({
                 success: true,
