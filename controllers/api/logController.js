@@ -1,13 +1,15 @@
 const mongoose = require('mongoose');
-const db_mongoose = require('../../config/db_mongoose');
+const { StringCon, connectDB } = require('../../config/db_mongoose');
 const Log = require('../../models/noSql/log');
 
-// Connect to MongoDB
-mongoose.connect(db_mongoose.connection).then(() => {
-    console.log('Connected to MongoDB for logs');
-}).catch((err) => {
-    console.log('MongoDB connection error:', err);
-});
+// Connect to MongoDB if not already connected
+if (mongoose.connection.readyState === 0) {
+    connectDB().then(() => {
+        console.log('Connected to MongoDB for logs');
+    }).catch((err) => {
+        console.log('MongoDB connection error:', err);
+    });
+}
 
 module.exports = {
     // GET /api/logs

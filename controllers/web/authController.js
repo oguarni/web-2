@@ -64,6 +64,63 @@ module.exports = {
         });
     }),
 
+    // GET /register
+    registerForm: asyncHandler(async (req, res) => {
+        if (req.session.user) {
+            return res.redirect('/dashboard');
+        }
+        res.render('auth/register', {
+            title: 'Cadastro',
+            layout: 'auth'
+        });
+    }),
+
+    // POST /register
+    register: asyncHandler(async (req, res) => {
+        const { nome, login, senha, confirmarSenha } = req.body;
+        
+        // Validações básicas
+        if (!nome || !login || !senha || !confirmarSenha) {
+            req.flash('error', 'Todos os campos são obrigatórios');
+            return res.redirect('/register');
+        }
+
+        if (senha !== confirmarSenha) {
+            req.flash('error', 'As senhas não coincidem');
+            return res.redirect('/register');
+        }
+
+        if (senha.length < 6) {
+            req.flash('error', 'A senha deve ter pelo menos 6 caracteres');
+            return res.redirect('/register');
+        }
+
+        try {
+            // Verificar se o login já existe
+            const existingUser = await db.Usuario.findOne({ where: { login } });
+            if (existingUser) {
+                req.flash('error', 'Login já está em uso');
+                return res.redirect('/register');
+            }
+
+            // Criar novo usuário
+            const hashedPassword = await bcrypt.hash(senha, 10);
+            const newUser = await db.Usuario.create({
+                nome,
+                login,
+                senha: hashedPassword,
+                tipo: 2 // Usuário comum por padrão
+            });
+
+            req.flash('success', 'Cadastro realizado com sucesso! Faça login para continuar.');
+            res.redirect('/login');
+        } catch (error) {
+            console.error('Erro no cadastro:', error);
+            req.flash('error', 'Erro interno do servidor');
+            res.redirect('/register');
+        }
+    }),
+
     // GET /dashboard
     dashboard: asyncHandler(async (req, res) => {
         if (!req.session.user) {

@@ -7,6 +7,10 @@ const { redirectIfAuthenticated, requireAuth } = require('../../middlewares/webA
 router.get('/login', redirectIfAuthenticated, authController.loginForm);
 router.post('/login', redirectIfAuthenticated, authController.login);
 
+// Register routes
+router.get('/register', redirectIfAuthenticated, authController.registerForm);
+router.post('/register', redirectIfAuthenticated, authController.register);
+
 // Logout route
 router.get('/logout', authController.logout);
 

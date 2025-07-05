@@ -213,10 +213,55 @@ module.exports = {
                 return res.redirect('/reservas');
             }
 
+            const startDate = new Date(dataInicio);
+            const endDate = new Date(dataFim);
+            
+            if (startDate >= endDate) {
+                req.flash('error', 'Data de início deve ser anterior à data de fim');
+                return res.redirect(`/reservas/${id}/edit`);
+            }
+
+            if (startDate < new Date()) {
+                req.flash('error', 'Data de início não pode ser no passado');
+                return res.redirect(`/reservas/${id}/edit`);
+            }
+
+            // Check for conflicts (exclude current reservation)
+            const conflictingReserva = await db.Reserva.findOne({
+                where: {
+                    id: { [db.Sequelize.Op.ne]: id }, // Exclude current reservation
+                    espacoId: parseInt(espacoId),
+                    status: ['confirmada', 'pendente'],
+                    [db.Sequelize.Op.or]: [
+                        {
+                            dataInicio: {
+                                [db.Sequelize.Op.between]: [startDate, endDate]
+                            }
+                        },
+                        {
+                            dataFim: {
+                                [db.Sequelize.Op.between]: [startDate, endDate]
+                            }
+                        },
+                        {
+                            [db.Sequelize.Op.and]: [
+                                { dataInicio: { [db.Sequelize.Op.lte]: startDate } },
+                                { dataFim: { [db.Sequelize.Op.gte]: endDate } }
+                            ]
+                        }
+                    ]
+                }
+            });
+
+            if (conflictingReserva) {
+                req.flash('error', 'Existe uma reserva conflitante neste horário');
+                return res.redirect(`/reservas/${id}/edit`);
+            }
+
             const updateData = {
                 titulo,
-                dataInicio: new Date(dataInicio),
-                dataFim: new Date(dataFim),
+                dataInicio: startDate,
+                dataFim: endDate,
                 descricao,
                 espacoId: parseInt(espacoId)
             };

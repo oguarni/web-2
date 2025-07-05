@@ -10,8 +10,157 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
+const db = require('./config/db_sequelize');
+const { connectDB } = require('./config/db_mongoose');
+const bcrypt = require('bcryptjs');
 
 const app = express();
+
+// Função para verificar se tabelas existem
+const checkTablesExist = async () => {
+    try {
+        await db.sequelize.authenticate();
+        const [results] = await db.sequelize.query(`
+            SELECT COUNT(*) as count FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name IN ('usuarios', 'espacos', 'reservas', 'amenities', 'espaco_amenities')
+        `);
+        return parseInt(results[0].count) >= 5;
+    } catch (error) {
+        console.error('Erro ao verificar tabelas:', error);
+        return false;
+    }
+};
+
+// Função para criar usuários padrão
+const createDefaultUsers = async () => {
+    try {
+        const adminExists = await db.Usuario.findOne({ where: { login: 'admin' } });
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await db.Usuario.create({
+                nome: 'Administrador',
+                login: 'admin',
+                senha: hashedPassword,
+                tipo: 1
+            });
+            console.log('Usuário admin criado com sucesso');
+        }
+
+        const userExists = await db.Usuario.findOne({ where: { login: 'usuario' } });
+        if (!userExists) {
+            const hashedPassword = await bcrypt.hash('usuario123', 10);
+            await db.Usuario.create({
+                nome: 'Usuário Comum',
+                login: 'usuario',
+                senha: hashedPassword,
+                tipo: 2
+            });
+            console.log('Usuário comum criado com sucesso');
+        }
+
+        const gestorExists = await db.Usuario.findOne({ where: { login: 'gestor' } });
+        if (!gestorExists) {
+            const hashedPassword = await bcrypt.hash('gestor123', 10);
+            await db.Usuario.create({
+                nome: 'Gestor',
+                login: 'gestor',
+                senha: hashedPassword,
+                tipo: 3
+            });
+            console.log('Usuário gestor criado com sucesso');
+        }
+    } catch (error) {
+        console.error('Erro ao criar usuários padrão:', error);
+    }
+};
+
+// Função para criar dados de exemplo
+const createSampleData = async () => {
+    try {
+        // Criar amenidades de exemplo
+        const amenitiesCount = await db.Amenity.count();
+        let amenities = [];
+        if (amenitiesCount === 0) {
+            amenities = await db.Amenity.bulkCreate([
+                { nome: 'WiFi', descricao: 'Acesso à internet sem fio' },
+                { nome: 'Projetor', descricao: 'Projetor para apresentações' },
+                { nome: 'Ar Condicionado', descricao: 'Sistema de climatização' },
+                { nome: 'Quadro Branco', descricao: 'Quadro para anotações' },
+                { nome: 'Mesa de Reunião', descricao: 'Mesa grande para reuniões' }
+            ]);
+            console.log('Amenidades de exemplo criadas');
+        } else {
+            amenities = await db.Amenity.findAll();
+        }
+
+        // Criar espaços de exemplo
+        const espacosCount = await db.Espaco.count();
+        let espacos = [];
+        if (espacosCount === 0) {
+            espacos = await db.Espaco.bulkCreate([
+                { nome: 'Sala de Reunião A', descricao: 'Sala para reuniões pequenas', capacidade: 8, localizacao: 'Térreo', ativo: true },
+                { nome: 'Auditório', descricao: 'Espaço para apresentações', capacidade: 50, localizacao: '1º Andar', ativo: true },
+                { nome: 'Sala de Treinamento', descricao: 'Sala para treinamentos', capacidade: 20, localizacao: '2º Andar', ativo: true }
+            ]);
+            console.log('Espaços de exemplo criados');
+        } else {
+            espacos = await db.Espaco.findAll();
+        }
+
+        // Criar associações N:N entre espaços e amenidades se não existirem
+        const associacoesCount = await db.EspacoAmenity.count();
+        if (associacoesCount === 0 && espacos.length > 0 && amenities.length > 0) {
+            // Sala de Reunião A: WiFi, Ar Condicionado, Quadro Branco, Mesa de Reunião
+            await espacos[0].addAmenities([amenities[0], amenities[2], amenities[3], amenities[4]]);
+            
+            // Auditório: WiFi, Projetor, Ar Condicionado
+            await espacos[1].addAmenities([amenities[0], amenities[1], amenities[2]]);
+            
+            // Sala de Treinamento: WiFi, Projetor, Quadro Branco, Mesa de Reunião
+            await espacos[2].addAmenities([amenities[0], amenities[1], amenities[3], amenities[4]]);
+            
+            console.log('Associações N:N Espaco-Amenity criadas');
+        }
+    } catch (error) {
+        console.error('Erro ao criar dados de exemplo:', error);
+    }
+};
+
+// Inicialização do banco de dados
+const initializeDatabase = async () => {
+    try {
+        // Criar banco PostgreSQL se não existir
+        await db.createDatabaseIfNotExists();
+        
+        // Conectar ao MongoDB
+        await connectDB();
+        
+        // Verificar se tabelas existem
+        const tablesExist = await checkTablesExist();
+        
+        if (!tablesExist) {
+            console.log('Sincronizando banco de dados...');
+            await db.sequelize.sync({ force: false });
+            console.log('Sincronização concluída');
+            
+            // Criar usuários padrão
+            await createDefaultUsers();
+            
+            // Criar dados de exemplo
+            await createSampleData();
+        } else {
+            console.log('Banco de dados já sincronizado');
+        }
+        
+        console.log('Inicialização do banco de dados concluída');
+    } catch (error) {
+        console.error('Erro na inicialização do banco de dados:', error);
+        process.exit(1);
+    }
+};
+
+// Inicializar banco de dados
+initializeDatabase();
 
 // View engine setup
 app.engine('hbs', exphbs.engine({

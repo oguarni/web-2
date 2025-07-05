@@ -4,8 +4,9 @@
   "description": "Sistema de Reservas de Espaços Coletivos",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js"
+    "test": "node test_requirements.js",
+    "start": "node app.js",
+    "dev": "node app.js"
   },
   "keywords": [],
   "author": "Gabriel Felipe Guarnieri",

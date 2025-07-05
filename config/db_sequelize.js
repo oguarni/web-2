@@ -1,12 +1,63 @@
 const Sequelize = require('sequelize');
-const sequelize = new Sequelize('web2_db', 'postgres', '1234', {
-    host: 'localhost',
-    dialect: 'postgres'
-});
+const { Client } = require('pg');
+
+// Configuração do banco de dados
+const DB_CONFIG = {
+    database: process.env.DB_NAME || 'web2_db',
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASS || '1234',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    dialectOptions: {
+        ssl: process.env.NODE_ENV === 'production' ? { require: true, rejectUnauthorized: false } : false
+    },
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    },
+    logging: process.env.NODE_ENV === 'development' ? console.log : false
+};
+
+// Função para criar o banco de dados se não existir
+const createDatabaseIfNotExists = async () => {
+    const client = new Client({
+        host: DB_CONFIG.host,
+        port: DB_CONFIG.port,
+        user: DB_CONFIG.username,
+        password: DB_CONFIG.password,
+        database: 'postgres' // conecta ao banco padrão postgres
+    });
+
+    try {
+        await client.connect();
+        const result = await client.query(
+            `SELECT 1 FROM pg_database WHERE datname = '${DB_CONFIG.database}'`
+        );
+        
+        if (result.rows.length === 0) {
+            await client.query(`CREATE DATABASE "${DB_CONFIG.database}"`);
+            console.log(`Database ${DB_CONFIG.database} created successfully`);
+        } else {
+            console.log(`Database ${DB_CONFIG.database} already exists`);
+        }
+    } catch (error) {
+        console.error('Error creating database:', error.message);
+        throw error;
+    } finally {
+        await client.end();
+    }
+};
+
+// Cria a instância do Sequelize
+const sequelize = new Sequelize(DB_CONFIG.database, DB_CONFIG.username, DB_CONFIG.password, DB_CONFIG);
 
 var db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
+db.createDatabaseIfNotExists = createDatabaseIfNotExists;
 
 // Import relational models
 db.Usuario = require('../models/relational/usuario.js')(sequelize, Sequelize);
