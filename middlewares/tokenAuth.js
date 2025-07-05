@@ -1,99 +1,40 @@
-const crypto = require('crypto');
-const db = require('../config/db_sequelize');
+const jwt = require('jsonwebtoken');
+const { UnauthorizedError, ForbiddenError } = require('./errorHandler');
 
-// In-memory token store (in production, use Redis or database)
-const tokenStore = new Map();
-const TOKEN_EXPIRY = 3600000; // 1 hour in milliseconds
+// Ensure JWT_SECRET is set in your environment variables
+const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key';
 
-// Generate secure random token
-const generateToken = () => {
-    return crypto.randomBytes(32).toString('hex');
-};
-
-// Create token for user
-const createToken = (userId, userType) => {
-    const token = generateToken();
-    const expires = Date.now() + TOKEN_EXPIRY;
-    
-    tokenStore.set(token, {
-        userId,
-        userType,
-        expires
-    });
-    
-    return token;
-};
-
-// Validate token middleware
+// Middleware to validate JWT
 const validateToken = (req, res, next) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization;
     
-    if (!token) {
-        return res.status(401).json({ 
-            error: 'Access token required' 
-        });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next(new UnauthorizedError('Access token is required'));
     }
     
-    const tokenData = tokenStore.get(token);
+    const token = authHeader.split(' ')[1];
     
-    if (!tokenData || tokenData.expires < Date.now()) {
-        tokenStore.delete(token);
-        return res.status(401).json({ 
-            error: 'Invalid or expired token' 
-        });
-    }
-    
-    // Attach user info to request
-    req.user = {
-        id: tokenData.userId,
-        type: tokenData.userType
-    };
-    
-    next();
-};
-
-// Admin only middleware
-const requireAdmin = (req, res, next) => {
-    if (req.user.type !== 1) {
-        return res.status(403).json({ 
-            error: 'Admin access required' 
-        });
-    }
-    next();
-};
-
-// Owner or admin middleware
-const requireOwnerOrAdmin = (paramName = 'id') => {
-    return (req, res, next) => {
-        const resourceId = req.params[paramName];
-        
-        // Admin can access everything
-        if (req.user.type === 1) {
-            return next();
-        }
-        
-        // For other resources, check ownership in controller
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded; // Attach decoded user payload to request
         next();
-    };
-};
-
-// Clean expired tokens (call periodically)
-const cleanExpiredTokens = () => {
-    const now = Date.now();
-    for (const [token, data] of tokenStore.entries()) {
-        if (data.expires < now) {
-            tokenStore.delete(token);
+    } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return next(new UnauthorizedError('Token has expired'));
         }
+        return next(new ForbiddenError('Invalid token'));
     }
 };
 
-// Clean expired tokens every 10 minutes
-setInterval(cleanExpiredTokens, 600000);
+// Middleware to require admin privileges
+const requireAdmin = (req, res, next) => {
+    if (req.user && req.user.tipo === 1) {
+        return next();
+    }
+    next(new ForbiddenError('Admin access required'));
+};
 
 module.exports = {
-    createToken,
     validateToken,
-    requireAdmin,
-    requireOwnerOrAdmin,
-    cleanExpiredTokens
+    requireAdmin
 };

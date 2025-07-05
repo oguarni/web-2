@@ -1,6 +1,9 @@
 const db = require('../../config/db_sequelize');
-const { createToken } = require('../../middlewares/tokenAuth');
+const jwt = require('jsonwebtoken');
 const { asyncHandler, UnauthorizedError } = require('../../middlewares/errorHandler');
+
+// Ensure JWT_SECRET is set in your environment variables
+const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key';
 
 module.exports = {
     // POST /api/auth/login
@@ -15,8 +18,15 @@ module.exports = {
             throw new UnauthorizedError('Invalid credentials');
         }
         
-        // Create token
-        const token = createToken(usuario.id, usuario.tipo);
+        // Create JWT payload
+        const payload = {
+            id: usuario.id,
+            nome: usuario.nome,
+            tipo: usuario.tipo
+        };
+
+        // Sign the token
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
         
         res.json({
             success: true,

@@ -7,13 +7,13 @@ module.exports = {
             const { ativo } = req.query;
             let where = {};
             
-            // Filter by active status if provided
             if (ativo !== undefined) {
                 where.ativo = ativo === 'true';
             }
             
             const espacos = await db.Espaco.findAll({
                 where,
+                include: [db.Amenity], // Include associated amenities
                 order: [['nome', 'ASC']]
             });
             
@@ -42,7 +42,11 @@ module.exports = {
                         include: [
                             { model: db.Usuario, attributes: ['id', 'nome'] }
                         ]
-                    }
+                    },
+                    { 
+                        model: db.Amenity, // Include associated amenities
+                        through: { attributes: [] } // Don't show join table attributes
+                    } 
                 ]
             });
             
@@ -81,7 +85,6 @@ module.exports = {
                 });
             }
             
-            // Check if space name already exists
             const existingSpace = await db.Espaco.findOne({ where: { nome } });
             if (existingSpace) {
                 return res.status(409).json({
@@ -124,7 +127,6 @@ module.exports = {
                 });
             }
             
-            // Check if new name already exists (excluding current space)
             if (nome && nome !== espaco.nome) {
                 const existingSpace = await db.Espaco.findOne({ 
                     where: { nome, id: { [db.Sequelize.Op.ne]: id } } 
@@ -136,7 +138,6 @@ module.exports = {
                 }
             }
             
-            // Validate capacity if provided
             if (capacidade !== undefined && capacidade <= 0) {
                 return res.status(400).json({
                     error: 'Capacity must be greater than zero'
@@ -177,7 +178,6 @@ module.exports = {
                 });
             }
             
-            // Check if space has active reservations
             const activeReservations = await db.Reserva.count({
                 where: {
                     espacoId: id,
@@ -226,7 +226,6 @@ module.exports = {
                 });
             }
             
-            // Check for conflicting reservations
             const conflictingReservations = await db.Reserva.findAll({
                 where: {
                     espacoId: id,

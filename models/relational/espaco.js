@@ -29,5 +29,14 @@ module.exports = (sequelize, Sequelize) => {
             defaultValue: true
         }
     });
+
+    Espaco.associate = (models) => {
+        Espaco.belongsToMany(models.Amenity, { 
+            through: 'espaco_amenities', 
+            foreignKey: 'espacoId',
+            otherKey: 'amenityId'
+        });
+    };
+
     return Espaco;
-}
+};
