@@ -8,6 +8,64 @@ Este sistema permite o gerenciamento eficiente de reservas de espaços, com cont
 
 **Novidade:** Agora inclui uma **API REST completa** com autenticação por token para integração com outros sistemas.
 
+## 📚 Requisitos Acadêmicos Atendidos
+
+### ✅ NodeJS + Express
+- **Framework Express** configurado em `app.js`
+- **Servidor web** rodando na porta configurável
+- **Estrutura MVC** com controllers, models e views separados
+- **Middlewares customizados** para autenticação e validação
+
+### ✅ Rotas NodeJS
+- **Rotas organizadas** em módulos (`routers/api.js`, `routers/web/`)
+- **Controladores separados** para cada entidade
+- **Middleware de autenticação** aplicado nas rotas protegidas
+- **Estrutura RESTful** seguindo convenções
+
+### ✅ Parâmetros em Rotas
+- **Route parameters**: `/api/usuarios/:id`, `/api/espacos/:id`
+- **Query parameters**: `/api/espacos?ativo=true&capacidade=10`
+- **Body parameters**: Todos os endpoints POST/PUT recebem dados via `req.body`
+- **Parameter validation**: Middlewares de validação para todos os parâmetros
+
+### ✅ Métodos HTTP POST e GET
+- **GET**: Listagem e consulta de recursos
+  - `GET /api/usuarios` - Lista todos os usuários
+  - `GET /api/usuarios/:id` - Consulta usuário específico
+  - `GET /api/espacos` - Lista espaços com filtros
+  - `GET /api/reservas` - Lista reservas do usuário
+- **POST**: Criação de novos recursos
+  - `POST /api/usuarios` - Criar novo usuário
+  - `POST /api/espacos` - Criar novo espaço
+  - `POST /api/reservas` - Criar nova reserva
+  - `POST /api/auth/login` - Autenticação no sistema
+
+### ✅ MongoDB + Compass + Atlas
+- **MongoDB Atlas** configurado via `MONGODB_URI` em `config/db_mongoose.js`
+- **Fallback para localhost** durante desenvolvimento
+- **Collection de logs** no MongoDB para auditoria
+- **Mongoose ODM** para modelagem de dados NoSQL
+- **Compatível com MongoDB Compass** para visualização
+
+### ✅ NodeJS + Sequelize
+- **Sequelize ORM** configurado em `config/db_sequelize.js`
+- **Modelos relacionais** em `models/relational/`
+- **Relacionamentos definidos**: 1:N e N:N
+- **Sincronização automática** de tabelas
+- **Validações e constraints** nos modelos
+
+### 🎯 Demonstração dos Requisitos
+Execute o script de demonstração para ver todos os requisitos em ação:
+```bash
+node demo_requisitos.js
+```
+
+### 📋 Validação dos Requisitos
+Valide que todos os requisitos estão sendo atendidos:
+```bash
+npm test
+```
+
 ## 🚀 Tecnologias Utilizadas
 
 ### Backend
