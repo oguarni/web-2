@@ -1,0 +1,239 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-calendar-check me-2"></i>Detalhes da Reserva</h1>
+    <div class="btn-group">
+        <a href="/reservas" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        {{#if canManage}}
+        <a href="/reservas/{{reserva.id}}/edit" class="btn btn-primary">
+            <i class="fas fa-edit me-2"></i>Editar
+        </a>
+        {{/if}}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3 class="mb-3">
+                            {{reserva.titulo}}
+                            <span class="badge bg-{{statusBadge reserva.status}} ms-2">
+                                {{capitalize reserva.status}}
+                            </span>
+                        </h3>
+                        
+                        {{#if reserva.descricao}}
+                        <div class="mb-4">
+                            <h5 class="text-muted">Descrição</h5>
+                            <p>{{reserva.descricao}}</p>
+                        </div>
+                        {{/if}}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-muted">Informações da Reserva</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">ID da Reserva</label>
+                                    <div class="fw-bold">{{reserva.id}}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Data e Hora de Início</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-calendar me-2"></i>{{formatDateTime reserva.dataInicio}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Data e Hora de Fim</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-clock me-2"></i>{{formatDateTime reserva.dataFim}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Status</label>
+                                    <div>
+                                        <span class="badge bg-{{statusBadge reserva.status}} fs-6">
+                                            {{capitalize reserva.status}}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-muted">Espaço Reservado</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Nome do Espaço</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-building me-2"></i>{{reserva.espaco.nome}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Localização</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-map-marker-alt me-2"></i>{{reserva.espaco.localizacao}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Capacidade</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-users me-2"></i>{{reserva.espaco.capacidade}} pessoas
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Usuário Responsável</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-user me-2"></i>{{reserva.usuario.nome}}
+                                    </div>
+                                    <small class="text-muted">{{reserva.usuario.login}}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="text-muted">Auditoria</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted">Criada em</label>
+                                        <div class="fw-bold">{{formatDateTime reserva.createdAt}}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted">Última atualização</label>
+                                        <div class="fw-bold">{{formatDateTime reserva.updatedAt}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Status da Reserva
+                </h5>
+                <div class="text-center">
+                    {{#if (eq reserva.status 'confirmada')}}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h6>Reserva Confirmada</h6>
+                            <p class="mb-0">Sua reserva foi aprovada</p>
+                        </div>
+                    {{else}}{{#if (eq reserva.status 'pendente')}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <h6>Reserva Pendente</h6>
+                            <p class="mb-0">Aguardando aprovação</p>
+                        </div>
+                    {{else}}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle fa-2x mb-2"></i>
+                            <h6>Reserva Cancelada</h6>
+                            <p class="mb-0">Esta reserva foi cancelada</p>
+                        </div>
+                    {{/if}}{{/if}}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>Duração
+                </h5>
+                <div class="text-center">
+                    <h4 class="mb-0" id="duration"></h4>
+                    <small class="text-muted">Duração total</small>
+                </div>
+            </div>
+        </div>
+        
+        {{#if canManage}}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>Ações
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="/reservas/{{reserva.id}}/edit" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar Reserva
+                    </a>
+                    <a href="/espacos/{{reserva.espacoId}}" class="btn btn-outline-info">
+                        <i class="fas fa-building me-2"></i>Ver Espaço
+                    </a>
+                    <form method="POST" action="/reservas/{{reserva.id}}?_method=DELETE">
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-delete">
+                            <i class="fas fa-trash me-2"></i>Excluir Reserva
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-calendar-alt me-2"></i>Cronograma
+                </h5>
+                <div class="text-muted">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Início:</strong>
+                        <span>{{formatDate reserva.dataInicio}}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Fim:</strong>
+                        <span>{{formatDate reserva.dataFim}}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <strong>Horário:</strong>
+                        <span id="timeRange"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate and display duration
+    const startDate = new Date('{{reserva.dataInicio}}');
+    const endDate = new Date('{{reserva.dataFim}}');
+    const durationMs = endDate - startDate;
+    const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+    const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let durationText = '';
+    if (durationHours > 0) {
+        durationText += durationHours + 'h ';
+    }
+    if (durationMinutes > 0) {
+        durationText += durationMinutes + 'min';
+    }
+    if (durationText === '') {
+        durationText = '< 1min';
+    }
+    
+    document.getElementById('duration').textContent = durationText;
+    
+    // Display time range
+    const startTime = startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const endTime = endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('timeRange').textContent = startTime + ' - ' + endTime;
+});
+</script>

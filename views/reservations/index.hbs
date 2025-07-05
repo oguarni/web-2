@@ -1,0 +1,124 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-calendar-check me-2"></i>Reservas</h1>
+    {{#if canCreateReserva}}
+    <a href="/reservas/new" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nova Reserva
+    </a>
+    {{/if}}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {{#if reservas.length}}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Espaço</th>
+                        {{#if canManageAll}}
+                        <th>Usuário</th>
+                        {{/if}}
+                        <th>Data/Hora</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each reservas}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>
+                            <strong>{{titulo}}</strong>
+                            {{#if descricao}}
+                                <br><small class="text-muted">{{descricao}}</small>
+                            {{/if}}
+                        </td>
+                        <td>
+                            <strong>{{espaco.nome}}</strong>
+                            <br><small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{espaco.localizacao}}
+                            </small>
+                        </td>
+                        {{#if ../canManageAll}}
+                        <td>
+                            <i class="fas fa-user me-1"></i>{{usuario.nome}}
+                            <br><small class="text-muted">{{usuario.login}}</small>
+                        </td>
+                        {{/if}}
+                        <td>
+                            <div class="fw-bold">
+                                <i class="fas fa-calendar me-1"></i>{{formatDateTime dataInicio}}
+                            </div>
+                            <div class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{formatDateTime dataFim}}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{statusBadge status}}">
+                                {{capitalize status}}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="/reservas/{{id}}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {{#if (or (eq ../user.tipo 1) (eq ../user.tipo 3) (eq usuarioId ../user.id))}}
+                                <a href="/reservas/{{id}}/edit" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="/reservas/{{id}}?_method=DELETE" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {{/if}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="text-center py-4">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Nenhuma reserva encontrada</h5>
+            {{#if canCreateReserva}}
+            <p class="text-muted">Crie sua primeira reserva para começar</p>
+            <a href="/reservas/new" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Criar primeira reserva
+            </a>
+            {{else}}
+            <p class="text-muted">Você não possui reservas</p>
+            {{/if}}
+        </div>
+        {{/if}}
+    </div>
+</div>
+
+{{#if canManageAll}}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            <i class="fas fa-filter me-2"></i>Filtros Rápidos
+        </h5>
+        <div class="btn-group" role="group">
+            <a href="/reservas?status=pendente" class="btn btn-outline-warning">
+                <i class="fas fa-clock me-1"></i>Pendentes
+            </a>
+            <a href="/reservas?status=confirmada" class="btn btn-outline-success">
+                <i class="fas fa-check me-1"></i>Confirmadas
+            </a>
+            <a href="/reservas?status=cancelada" class="btn btn-outline-danger">
+                <i class="fas fa-times me-1"></i>Canceladas
+            </a>
+            <a href="/reservas" class="btn btn-outline-info">
+                <i class="fas fa-list me-1"></i>Todas
+            </a>
+        </div>
+    </div>
+</div>
+{{/if}}

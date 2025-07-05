@@ -1,0 +1,83 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-plus me-2"></i>Novo Usuário</h1>
+    <a href="/usuarios" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/usuarios">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="login" class="form-label">Login <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="login" name="login" required>
+                        <div class="form-text">Login único para acesso ao sistema</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="senha" name="senha" required>
+                        <div class="form-text">Mínimo 6 caracteres</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo de Usuário</label>
+                        <select class="form-select" id="tipo" name="tipo">
+                            <option value="2" selected>Usuário Comum</option>
+                            <option value="3">Gestor</option>
+                            <option value="1">Administrador</option>
+                        </select>
+                        <div class="form-text">
+                            <small>
+                                <strong>Comum:</strong> Pode criar e gerenciar suas próprias reservas<br>
+                                <strong>Gestor:</strong> Pode gerenciar espaços e ver todas as reservas<br>
+                                <strong>Admin:</strong> Acesso total ao sistema
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/usuarios" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Nome completo</li>
+                        <li>Login único</li>
+                        <li>Senha (min. 6 caracteres)</li>
+                    </ul>
+                    
+                    <p><strong>Tipos de usuário:</strong></p>
+                    <ul>
+                        <li><span class="badge bg-success">Comum</span> - Reservas próprias</li>
+                        <li><span class="badge bg-warning">Gestor</span> - Gerencia espaços</li>
+                        <li><span class="badge bg-danger">Admin</span> - Acesso total</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

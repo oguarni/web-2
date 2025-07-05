@@ -1,4 +1,4 @@
 const StringCon = {
-    connection: "mongodb+srv://username:password@cluster0.example.mongodb.net/reservas_db?retryWrites=true&w=majority"
+    connection: process.env.MONGODB_URI || "mongodb://localhost:27017/reservas_db"
 }
 module.exports = StringCon;

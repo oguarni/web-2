@@ -1,0 +1,204 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-edit me-2"></i>Editar Reserva</h1>
+    <div class="btn-group">
+        <a href="/reservas" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="/reservas/{{reserva.id}}" class="btn btn-info">
+            <i class="fas fa-eye me-2"></i>Ver Detalhes
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/reservas/{{reserva.id}}?_method=PUT">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título da Reserva <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" value="{{reserva.titulo}}" required>
+                        <div class="form-text">Descreva brevemente o propósito da reserva</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="espacoId" class="form-label">Espaço <span class="text-danger">*</span></label>
+                        <select class="form-select" id="espacoId" name="espacoId" required>
+                            <option value="">Selecione um espaço</option>
+                            {{#each espacos}}
+                            <option value="{{id}}" {{#if (eq id ../reserva.espacoId)}}selected{{/if}}>
+                                {{nome}} - {{localizacao}} ({{capacidade}} pessoas)
+                            </option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dataInicio" class="form-label">Data e Hora de Início <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="dataInicio" name="dataInicio" 
+                                       value="{{formatISO reserva.dataInicio}}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dataFim" class="form-label">Data e Hora de Fim <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="dataFim" name="dataFim" 
+                                       value="{{formatISO reserva.dataFim}}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4">{{reserva.descricao}}</textarea>
+                        <div class="form-text">Informações adicionais sobre a reserva</div>
+                    </div>
+                    
+                    {{#if canChangeStatus}}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="pendente" {{#if (eq reserva.status 'pendente')}}selected{{/if}}>Pendente</option>
+                            <option value="confirmada" {{#if (eq reserva.status 'confirmada')}}selected{{/if}}>Confirmada</option>
+                            <option value="cancelada" {{#if (eq reserva.status 'cancelada')}}selected{{/if}}>Cancelada</option>
+                        </select>
+                        <div class="form-text">Apenas administradores e gestores podem alterar o status</div>
+                    </div>
+                    {{/if}}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/reservas/{{reserva.id}}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Reserva ID:</strong> {{reserva.id}}</p>
+                    <p><strong>Status atual:</strong> 
+                        <span class="badge bg-{{statusBadge reserva.status}}">
+                            {{capitalize reserva.status}}
+                        </span>
+                    </p>
+                    <p><strong>Criada por:</strong> {{reserva.usuario.nome}}</p>
+                    <p><strong>Criada em:</strong> {{formatDateTime reserva.createdAt}}</p>
+                    
+                    <hr>
+                    
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Título da reserva</li>
+                        <li>Espaço</li>
+                        <li>Data e hora de início</li>
+                        <li>Data e hora de fim</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-building me-2"></i>Espaço Atual
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Nome:</strong> {{reserva.espaco.nome}}</p>
+                    <p><strong>Localização:</strong> {{reserva.espaco.localizacao}}</p>
+                    <p><strong>Capacidade:</strong> {{reserva.espaco.capacidade}} pessoas</p>
+                </div>
+            </div>
+        </div>
+        
+        {{#if canChangeStatus}}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>Status da Reserva
+                </h5>
+                <div class="text-muted">
+                    <p class="small">
+                        <strong>Pendente:</strong> Aguardando aprovação
+                    </p>
+                    <p class="small">
+                        <strong>Confirmada:</strong> Reserva aprovada e ativa
+                    </p>
+                    <p class="small">
+                        <strong>Cancelada:</strong> Reserva cancelada ou negada
+                    </p>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Atenção
+                </h5>
+                <div class="text-muted">
+                    <p class="small">
+                        <strong>Conflitos:</strong> O sistema verificará automaticamente 
+                        se há conflitos com outras reservas ao salvar.
+                    </p>
+                    <p class="small">
+                        <strong>Datas passadas:</strong> Não é possível alterar para 
+                        datas no passado.
+                    </p>
+                    {{#if canChangeStatus}}
+                    <p class="small">
+                        <strong>Status:</strong> Alterações de status afetam 
+                        imediatamente a disponibilidade da reserva.
+                    </p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dataInicio = document.getElementById('dataInicio');
+    const dataFim = document.getElementById('dataFim');
+    
+    // Set minimum date to current date/time
+    const now = new Date();
+    const minDateTime = now.toISOString().slice(0, 16);
+    
+    // Only apply minimum date restriction for new start times
+    dataInicio.addEventListener('change', function() {
+        if (this.value) {
+            dataFim.min = this.value;
+        }
+    });
+    
+    // Format dates for datetime-local inputs
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().slice(0, 16);
+    };
+    
+    // Format existing dates properly
+    if (dataInicio.value) {
+        dataInicio.value = formatDateForInput(dataInicio.value);
+    }
+    if (dataFim.value) {
+        dataFim.value = formatDateForInput(dataFim.value);
+    }
+});
+</script>

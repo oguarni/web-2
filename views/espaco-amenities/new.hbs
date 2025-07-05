@@ -1,0 +1,71 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-plus me-2"></i>Nova Associação</h1>
+    <a href="/espaco-amenities" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/espaco-amenities">
+                    <div class="mb-3">
+                        <label for="espacoId" class="form-label">Espaço <span class="text-danger">*</span></label>
+                        <select class="form-select" id="espacoId" name="espacoId" required>
+                            <option value="">Selecione um espaço</option>
+                            {{#each espacos}}
+                            <option value="{{id}}">{{nome}} - {{localizacao}}</option>
+                            {{/each}}
+                        </select>
+                        <div class="form-text">Escolha o espaço que receberá a amenidade</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amenityId" class="form-label">Amenidade <span class="text-danger">*</span></label>
+                        <select class="form-select" id="amenityId" name="amenityId" required>
+                            <option value="">Selecione uma amenidade</option>
+                            {{#each amenities}}
+                            <option value="{{id}}">{{nome}}{{#if descricao}} - {{descricao}}{{/if}}</option>
+                            {{/each}}
+                        </select>
+                        <div class="form-text">Escolha a amenidade que será associada ao espaço</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/espaco-amenities" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Espaço</li>
+                        <li>Amenidade</li>
+                    </ul>
+                    
+                    <p><strong>Sobre associações:</strong></p>
+                    <p>
+                        Cada associação conecta um espaço específico a uma amenidade disponível. 
+                        Isso permite que os usuários saibam exatamente quais recursos estão disponíveis 
+                        em cada espaço.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

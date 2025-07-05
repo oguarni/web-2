@@ -1,0 +1,25 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-calendar-alt me-2"></i>Sistema de Reservas
+        </a>
+        
+        {{#if isAuthenticated}}
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user me-1"></i>{{user.nome}}
+                    <span class="badge bg-{{#if isAdmin}}danger{{else}}{{#if isGestor}}warning{{else}}success{{/if}}{{/if}} badge-role ms-1">
+                        {{tipoUsuario user.tipo}}
+                    </span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                </ul>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+</nav>

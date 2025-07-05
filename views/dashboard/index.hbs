@@ -1,0 +1,197 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h1>
+    <div class="text-muted">
+        Bem-vindo, <strong>{{user.nome}}</strong>
+    </div>
+</div>
+
+{{#if isAdmin}}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Usuários</h5>
+                        <h3>{{stats.totalUsuarios}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/usuarios" class="text-white text-decoration-none">
+                    Ver todos <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Espaços</h5>
+                        <h3>{{stats.totalEspacos}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/espacos" class="text-white text-decoration-none">
+                    Ver todos <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Reservas</h5>
+                        <h3>{{stats.totalReservas}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/reservas" class="text-white text-decoration-none">
+                    Ver todas <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{{/if}}
+
+{{#if isGestor}}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Espaços</h5>
+                        <h3>{{stats.totalEspacos}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/espacos" class="text-white text-decoration-none">
+                    Gerenciar <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Reservas</h5>
+                        <h3>{{stats.totalReservas}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/reservas" class="text-white text-decoration-none">
+                    Ver todas <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{{/if}}
+
+{{#if isComum}}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Minhas Reservas</h5>
+                        <h3>{{stats.minhasReservas}}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/reservas" class="text-white text-decoration-none">
+                    Ver minhas reservas <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Nova Reserva</h5>
+                        <p class="mb-0">Reservar um espaço</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-plus fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/reservas/new" class="text-white text-decoration-none">
+                    Criar reserva <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{{/if}}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Acesso Rápido</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="/reservas" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-calendar-check me-2"></i>Reservas
+                        </a>
+                    </div>
+                    {{#if isAdminOrGestor}}
+                    <div class="col-md-3">
+                        <a href="/espacos" class="btn btn-outline-success w-100 mb-2">
+                            <i class="fas fa-building me-2"></i>Espaços
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/amenities" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-star me-2"></i>Amenidades
+                        </a>
+                    </div>
+                    {{/if}}
+                    <div class="col-md-3">
+                        <a href="/api/docs" target="_blank" class="btn btn-outline-secondary w-100 mb-2">
+                            <i class="fas fa-code me-2"></i>API Docs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

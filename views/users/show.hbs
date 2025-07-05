@@ -1,0 +1,133 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user me-2"></i>Detalhes do Usuário</h1>
+    <div class="btn-group">
+        <a href="/usuarios" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="/usuarios/{{usuario.id}}/edit" class="btn btn-primary">
+            <i class="fas fa-edit me-2"></i>Editar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Informações Básicas</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">ID</label>
+                            <div class="fw-bold">{{usuario.id}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome</label>
+                            <div class="fw-bold">{{usuario.nome}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Login</label>
+                            <div class="fw-bold">{{usuario.login}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Tipo</label>
+                            <div>
+                                <span class="badge bg-{{#if (eq usuario.tipo 1)}}danger{{else}}{{#if (eq usuario.tipo 3)}}warning{{else}}success{{/if}}{{/if}} fs-6">
+                                    {{tipoUsuario usuario.tipo}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Auditoria</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Criado em</label>
+                            <div class="fw-bold">{{formatDateTime usuario.createdAt}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Última atualização</label>
+                            <div class="fw-bold">{{formatDateTime usuario.updatedAt}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-shield-alt me-2"></i>Permissões
+                </h5>
+                <div class="text-muted">
+                    {{#if (eq usuario.tipo 1)}}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-crown me-2"></i>
+                            <strong>Administrador</strong><br>
+                            Acesso total ao sistema
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar usuários</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar espaços</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar reservas</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar amenidades</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Visualizar logs</li>
+                        </ul>
+                    {{else}}{{#if (eq usuario.tipo 3)}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-user-tie me-2"></i>
+                            <strong>Gestor</strong><br>
+                            Gerenciamento de espaços
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-times text-danger me-2"></i>Gerenciar usuários</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar espaços</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Ver todas as reservas</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Gerenciar amenidades</li>
+                            <li><i class="fas fa-times text-danger me-2"></i>Visualizar logs</li>
+                        </ul>
+                    {{else}}
+                        <div class="alert alert-success">
+                            <i class="fas fa-user me-2"></i>
+                            <strong>Usuário Comum</strong><br>
+                            Reservas próprias
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-times text-danger me-2"></i>Gerenciar usuários</li>
+                            <li><i class="fas fa-times text-danger me-2"></i>Gerenciar espaços</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Suas reservas</li>
+                            <li><i class="fas fa-times text-danger me-2"></i>Gerenciar amenidades</li>
+                            <li><i class="fas fa-times text-danger me-2"></i>Visualizar logs</li>
+                        </ul>
+                    {{/if}}{{/if}}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>Ações
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="/usuarios/{{usuario.id}}/edit" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar Usuário
+                    </a>
+                    <form method="POST" action="/usuarios/{{usuario.id}}?_method=DELETE">
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-delete">
+                            <i class="fas fa-trash me-2"></i>Excluir Usuário
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -2,12 +2,97 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 const apiRoutes = require('./routers/api');
+const webRoutes = require('./routers/web');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
+const { addUserToViews } = require('./middlewares/webAuth');
+const exphbs = require('express-handlebars');
+const session = require('express-session');
+const flash = require('connect-flash');
+const methodOverride = require('method-override');
+const path = require('path');
+
 const app = express();
+
+// View engine setup
+app.engine('hbs', exphbs.engine({
+    extname: '.hbs',
+    defaultLayout: 'main',
+    layoutsDir: path.join(__dirname, 'views/layouts'),
+    partialsDir: path.join(__dirname, 'views/partials'),
+    helpers: {
+        eq: (a, b) => a === b,
+        ne: (a, b) => a !== b,
+        gt: (a, b) => a > b,
+        lt: (a, b) => a < b,
+        add: (a, b) => a + b,
+        subtract: (a, b) => a - b,
+        formatDate: (date) => {
+            if (!date) return '';
+            return new Date(date).toLocaleDateString('pt-BR');
+        },
+        formatDateTime: (date) => {
+            if (!date) return '';
+            return new Date(date).toLocaleString('pt-BR');
+        },
+        capitalize: (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '',
+        statusBadge: (status) => {
+            const badges = {
+                'confirmada': 'success',
+                'pendente': 'warning',
+                'cancelada': 'danger'
+            };
+            return badges[status] || 'secondary';
+        },
+        tipoUsuario: (tipo) => {
+            const tipos = {
+                1: 'Administrador',
+                2: 'Usuário Comum',
+                3: 'Gestor'
+            };
+            return tipos[tipo] || 'Desconhecido';
+        },
+        formatISO: (date) => {
+            if (!date) return '';
+            return new Date(date).toISOString().slice(0, 16);
+        }
+    }
+}));
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false, // Set to true in production with HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+// Flash messages
+app.use(flash());
+
+// Method override for PUT and DELETE
+app.use(methodOverride('_method'));
 
 // Middleware para processar JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Add user to views
+app.use(addUserToViews);
+
+// Flash messages middleware
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    next();
+});
 
 // CORS para permitir acesso de outras origens
 app.use((req, res, next) => {
@@ -28,18 +113,11 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
     customSiteTitle: "Sistema de Reservas - API Docs"
 }));
 
+// Web routes
+app.use('/', webRoutes);
+
 // Rotas da API
 app.use('/api', apiRoutes);
-
-// Rota raiz para documentação
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Sistema de Reservas de Espaços - API REST',
-        version: '1.0.0',
-        documentation: '/api/docs',
-        endpoints: '/api'
-    });
-});
 
 // 404 handler for undefined routes
 app.use(notFoundHandler);
@@ -48,6 +126,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Iniciar servidor
-app.listen(8081, function(){
-    console.log("Servidor no http://localhost:8081");
+const PORT = process.env.PORT || 8082;
+app.listen(PORT, function(){
+    console.log(`Servidor no http://localhost:${PORT}`);
 });

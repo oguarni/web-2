@@ -1,0 +1,153 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-calendar-plus me-2"></i>Nova Reserva</h1>
+    <a href="/reservas" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/reservas">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título da Reserva <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" required>
+                        <div class="form-text">Descreva brevemente o propósito da reserva</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="espacoId" class="form-label">Espaço <span class="text-danger">*</span></label>
+                        <select class="form-select" id="espacoId" name="espacoId" required>
+                            <option value="">Selecione um espaço</option>
+                            {{#each espacos}}
+                            <option value="{{id}}">
+                                {{nome}} - {{localizacao}} ({{capacidade}} pessoas)
+                            </option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dataInicio" class="form-label">Data e Hora de Início <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="dataInicio" name="dataInicio" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dataFim" class="form-label">Data e Hora de Fim <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="dataFim" name="dataFim" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4"></textarea>
+                        <div class="form-text">Informações adicionais sobre a reserva</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/reservas" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Criar Reserva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Título da reserva</li>
+                        <li>Espaço</li>
+                        <li>Data e hora de início</li>
+                        <li>Data e hora de fim</li>
+                    </ul>
+                    
+                    <p><strong>Status inicial:</strong></p>
+                    <p class="small">
+                        Sua reserva será criada com status <span class="badge bg-warning">Pendente</span>
+                        e aguardará aprovação de um administrador ou gestor.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-clock me-2"></i>Horários
+                </h5>
+                <div class="text-muted">
+                    <p class="small">
+                        <strong>Datas no passado:</strong> Não são permitidas
+                    </p>
+                    <p class="small">
+                        <strong>Conflitos:</strong> O sistema verifica automaticamente 
+                        se há conflitos com outras reservas
+                    </p>
+                    <p class="small">
+                        <strong>Duração:</strong> A data/hora de fim deve ser posterior 
+                        à data/hora de início
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightbulb me-2"></i>Dicas
+                </h5>
+                <div class="text-muted">
+                    <p class="small">
+                        <strong>Título:</strong> Use um título descritivo (ex: "Reunião de Equipe", "Treinamento")
+                    </p>
+                    <p class="small">
+                        <strong>Espaço:</strong> Escolha um espaço adequado para o número de participantes
+                    </p>
+                    <p class="small">
+                        <strong>Descrição:</strong> Inclua informações importantes como equipamentos necessários
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const espacoSelect = document.getElementById('espacoId');
+    const dataInicio = document.getElementById('dataInicio');
+    const dataFim = document.getElementById('dataFim');
+    
+    // Set minimum date to current date/time
+    const now = new Date();
+    const minDateTime = now.toISOString().slice(0, 16);
+    dataInicio.min = minDateTime;
+    dataFim.min = minDateTime;
+    
+    // Auto-adjust end time when start time changes
+    dataInicio.addEventListener('change', function() {
+        if (this.value) {
+            const startTime = new Date(this.value);
+            const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // Add 1 hour
+            dataFim.value = endTime.toISOString().slice(0, 16);
+            dataFim.min = this.value;
+        }
+    });
+});
+</script>

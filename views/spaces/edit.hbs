@@ -1,0 +1,158 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-edit me-2"></i>Editar Espaço</h1>
+    <div class="btn-group">
+        <a href="/espacos" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="/espacos/{{espaco.id}}" class="btn btn-info">
+            <i class="fas fa-eye me-2"></i>Ver Detalhes
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/espacos/{{espaco.id}}?_method=PUT">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome do Espaço <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="{{espaco.nome}}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3">{{espaco.descricao}}</textarea>
+                        <div class="form-text">Descrição detalhada do espaço</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="capacidade" class="form-label">Capacidade <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="capacidade" name="capacidade" min="1" value="{{espaco.capacidade}}" required>
+                                <div class="form-text">Número máximo de pessoas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="localizacao" class="form-label">Localização <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="localizacao" name="localizacao" value="{{espaco.localizacao}}" required>
+                                <div class="form-text">Andar, sala, bloco, etc.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="equipamentos" class="form-label">Equipamentos</label>
+                        <textarea class="form-control" id="equipamentos" name="equipamentos" rows="3">{{espaco.equipamentos}}</textarea>
+                        <div class="form-text">Lista de equipamentos disponíveis no espaço</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Amenidades</label>
+                        <div class="row">
+                            {{#each amenities}}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="amenities" value="{{id}}" id="amenity-{{id}}" 
+                                           {{#each ../espaco.amenities}}{{#if (eq id ../id)}}checked{{/if}}{{/each}}>
+                                    <label class="form-check-label" for="amenity-{{id}}">
+                                        {{nome}}
+                                    </label>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                        <div class="form-text">Selecione as amenidades disponíveis neste espaço</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {{#if espaco.ativo}}checked{{/if}}>
+                            <label class="form-check-label" for="ativo">
+                                Espaço ativo
+                            </label>
+                        </div>
+                        <div class="form-text">Espaços inativos não podem receber reservas</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/espacos/{{espaco.id}}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Espaço ID:</strong> {{espaco.id}}</p>
+                    <p><strong>Status atual:</strong> 
+                        <span class="badge bg-{{#if espaco.ativo}}success{{else}}danger{{/if}}">
+                            {{#if espaco.ativo}}Ativo{{else}}Inativo{{/if}}
+                        </span>
+                    </p>
+                    <p><strong>Capacidade atual:</strong> {{espaco.capacidade}} pessoas</p>
+                    <p><strong>Amenidades associadas:</strong> {{espaco.amenities.length}}</p>
+                    
+                    <hr>
+                    
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Nome do espaço</li>
+                        <li>Capacidade</li>
+                        <li>Localização</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-star me-2"></i>Amenidades Atuais
+                </h5>
+                <div class="text-muted">
+                    {{#if espaco.amenities.length}}
+                        <div class="d-flex flex-wrap">
+                            {{#each espaco.amenities}}
+                                <span class="badge bg-primary me-1 mb-1">{{nome}}</span>
+                            {{/each}}
+                        </div>
+                    {{else}}
+                        <p class="text-muted">Nenhuma amenidade associada</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Atenção
+                </h5>
+                <div class="text-muted">
+                    <p class="small">
+                        <strong>Desativar espaço:</strong> Reservas existentes não serão afetadas, 
+                        mas novas reservas não poderão ser criadas.
+                    </p>
+                    <p class="small">
+                        <strong>Alterar capacidade:</strong> Verifique se as reservas existentes 
+                        respeitam a nova capacidade.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

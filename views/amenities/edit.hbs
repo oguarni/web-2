@@ -1,0 +1,56 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-edit me-2"></i>Editar Amenidade</h1>
+    <a href="/amenities/{{amenity.id}}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="/amenities/{{amenity.id}}?_method=PUT">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="{{amenity.nome}}" required>
+                        <div class="form-text">Nome único da amenidade</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3">{{amenity.descricao}}</textarea>
+                        <div class="form-text">Descrição opcional da amenidade</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/amenities/{{amenity.id}}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informações
+                </h5>
+                <div class="text-muted">
+                    <p><strong>Campos obrigatórios:</strong></p>
+                    <ul>
+                        <li>Nome da amenidade</li>
+                    </ul>
+                    
+                    <p><strong>Última atualização:</strong></p>
+                    <p>{{formatDateTime amenity.updatedAt}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

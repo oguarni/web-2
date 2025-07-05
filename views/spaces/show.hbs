@@ -1,0 +1,175 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-building me-2"></i>Detalhes do Espaço</h1>
+    <div class="btn-group">
+        <a href="/espacos" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+        <a href="/espacos/{{espaco.id}}/edit" class="btn btn-primary">
+            <i class="fas fa-edit me-2"></i>Editar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3 class="mb-3">
+                            {{espaco.nome}}
+                            <span class="badge bg-{{#if espaco.ativo}}success{{else}}danger{{/if}} ms-2">
+                                {{#if espaco.ativo}}Ativo{{else}}Inativo{{/if}}
+                            </span>
+                        </h3>
+                        
+                        {{#if espaco.descricao}}
+                        <div class="mb-4">
+                            <h5 class="text-muted">Descrição</h5>
+                            <p>{{espaco.descricao}}</p>
+                        </div>
+                        {{/if}}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-muted">Informações Básicas</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">ID</label>
+                                    <div class="fw-bold">{{espaco.id}}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Localização</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-map-marker-alt me-2"></i>{{espaco.localizacao}}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Capacidade</label>
+                                    <div class="fw-bold">
+                                        <i class="fas fa-users me-2"></i>{{espaco.capacidade}} pessoas
+                                    </div>
+                                </div>
+                                
+                                {{#if espaco.equipamentos}}
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Equipamentos</label>
+                                    <div class="fw-bold">{{espaco.equipamentos}}</div>
+                                </div>
+                                {{/if}}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-muted">Amenidades</h5>
+                                
+                                {{#if espaco.amenities.length}}
+                                <div class="mb-3">
+                                    {{#each espaco.amenities}}
+                                    <span class="badge bg-primary me-1 mb-1">
+                                        <i class="fas fa-star me-1"></i>{{nome}}
+                                    </span>
+                                    {{/each}}
+                                </div>
+                                {{else}}
+                                <p class="text-muted">Nenhuma amenidade associada</p>
+                                {{/if}}
+                                
+                                <h5 class="text-muted mt-4">Auditoria</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Criado em</label>
+                                    <div class="fw-bold">{{formatDateTime espaco.createdAt}}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Última atualização</label>
+                                    <div class="fw-bold">{{formatDateTime espaco.updatedAt}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Status do Espaço
+                </h5>
+                <div class="text-center">
+                    {{#if espaco.ativo}}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h6>Espaço Ativo</h6>
+                            <p class="mb-0">Disponível para reservas</p>
+                        </div>
+                    {{else}}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle fa-2x mb-2"></i>
+                            <h6>Espaço Inativo</h6>
+                            <p class="mb-0">Não disponível para reservas</p>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>Resumo
+                </h5>
+                <div class="row text-center">
+                    <div class="col-12">
+                        <div class="border-bottom pb-2 mb-2">
+                            <h4 class="mb-0">{{espaco.capacidade}}</h4>
+                            <small class="text-muted">Capacidade máxima</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border-bottom pb-2 mb-2">
+                            <h4 class="mb-0">{{espaco.amenities.length}}</h4>
+                            <small class="text-muted">Amenidades</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="pb-2 mb-2">
+                            <h4 class="mb-0">
+                                <span class="badge bg-{{#if espaco.ativo}}success{{else}}danger{{/if}}">
+                                    {{#if espaco.ativo}}ON{{else}}OFF{{/if}}
+                                </span>
+                            </h4>
+                            <small class="text-muted">Status</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>Ações
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="/espacos/{{espaco.id}}/edit" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar Espaço
+                    </a>
+                    <a href="/reservas?espaco={{espaco.id}}" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-check me-2"></i>Ver Reservas
+                    </a>
+                    <form method="POST" action="/espacos/{{espaco.id}}?_method=DELETE">
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-delete">
+                            <i class="fas fa-trash me-2"></i>Excluir Espaço
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

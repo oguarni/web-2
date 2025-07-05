@@ -1,0 +1,43 @@
+<div class="sidebar p-3">
+    <h6 class="text-light mb-3">Menu</h6>
+    
+    <a href="/dashboard" class="{{#if (eq pageTitle 'Dashboard')}}active{{/if}}">
+        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+    </a>
+    
+    <a href="/reservas" class="{{#if (eq pageTitle 'Reservas')}}active{{/if}}">
+        <i class="fas fa-calendar-check me-2"></i>Reservas
+    </a>
+    
+    {{#if isAdminOrGestor}}
+    <a href="/espacos" class="{{#if (eq pageTitle 'Espaços')}}active{{/if}}">
+        <i class="fas fa-building me-2"></i>Espaços
+    </a>
+    
+    <a href="/amenities" class="{{#if (eq pageTitle 'Amenidades')}}active{{/if}}">
+        <i class="fas fa-star me-2"></i>Amenidades
+    </a>
+    
+    <a href="/espaco-amenities" class="{{#if (eq pageTitle 'Associações')}}active{{/if}}">
+        <i class="fas fa-link me-2"></i>Associações
+    </a>
+    {{/if}}
+    
+    {{#if isAdmin}}
+    <hr class="text-light">
+    <h6 class="text-light mb-3">Administração</h6>
+    
+    <a href="/usuarios" class="{{#if (eq pageTitle 'Usuários')}}active{{/if}}">
+        <i class="fas fa-users me-2"></i>Usuários
+    </a>
+    
+    <a href="/logs" class="{{#if (eq pageTitle 'Logs')}}active{{/if}}">
+        <i class="fas fa-list-alt me-2"></i>Logs
+    </a>
+    {{/if}}
+    
+    <hr class="text-light">
+    <a href="/api/docs" target="_blank" class="text-info">
+        <i class="fas fa-code me-2"></i>API Docs
+    </a>
+</div>

@@ -1,0 +1,94 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-link me-2"></i>Detalhes da Associação</h1>
+    <div class="btn-group">
+        <a href="/espaco-amenities" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Informações do Espaço</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">ID do Espaço</label>
+                            <div class="fw-bold">{{espacoAmenity.Espaco.id}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome</label>
+                            <div class="fw-bold">{{espacoAmenity.Espaco.nome}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Localização</label>
+                            <div class="fw-bold">{{espacoAmenity.Espaco.localizacao}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Capacidade</label>
+                            <div class="fw-bold">{{espacoAmenity.Espaco.capacidade}} pessoa(s)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Informações da Amenidade</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">ID da Amenidade</label>
+                            <div class="fw-bold">{{espacoAmenity.Amenity.id}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome</label>
+                            <div class="fw-bold">{{espacoAmenity.Amenity.nome}}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Descrição</label>
+                            <div class="fw-bold">{{#if espacoAmenity.Amenity.descricao}}{{espacoAmenity.Amenity.descricao}}{{else}}<span class="text-muted">-</span>{{/if}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-external-link-alt me-2"></i>Links Relacionados
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="/espacos/{{espacoAmenity.Espaco.id}}" class="btn btn-outline-primary">
+                        <i class="fas fa-building me-2"></i>Ver Espaço
+                    </a>
+                    <a href="/amenities/{{espacoAmenity.Amenity.id}}" class="btn btn-outline-info">
+                        <i class="fas fa-star me-2"></i>Ver Amenidade
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>Ações
+                </h5>
+                <div class="d-grid gap-2">
+                    <form method="POST" action="/espaco-amenities/{{espacoAmenity.Espaco.id}}/{{espacoAmenity.Amenity.id}}?_method=DELETE">
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-delete">
+                            <i class="fas fa-trash me-2"></i>Excluir Associação
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

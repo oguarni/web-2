@@ -22,9 +22,9 @@ module.exports = (sequelize, Sequelize) => {
         tipo: {
             type: Sequelize.INTEGER, 
             allowNull: false,
-            defaultValue: 2, // 1 = Admin, 2 = Usuário comum
+            defaultValue: 2, // 1 = Admin, 2 = Usuário comum, 3 = Gestor
             validate: {
-                isIn: [[1, 2]]
+                isIn: [[1, 2, 3]]
             }
         }
     });
