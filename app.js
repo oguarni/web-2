@@ -197,6 +197,11 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Servir os arquivos estáticos do build do React em produção
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, 'client/build')));
+}
+
 // Add user to views
 app.use(addUserToViews);
 
@@ -231,6 +236,14 @@ app.use('/', webRoutes);
 
 // Rotas da API
 app.use('/api', apiRoutes);
+
+// Para qualquer rota não-API em produção, servir o index.html do React
+// Isso permite que o React Router controle a navegação no lado do cliente.
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+    });
+}
 
 // 404 handler for undefined routes
 app.use(notFoundHandler);
