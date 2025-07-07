@@ -1,79 +1,215 @@
-<div class="card auth-card">
-    <div class="auth-header">
-        <h3><i class="fas fa-sign-in-alt me-2"></i>Login</h3>
-        <p class="mb-0">Acesse o Sistema de Reservas</p>
-    </div>
-    <div class="auth-body">
-        <form method="POST" action="/login">
-            <div class="mb-3">
-                <label for="login" class="form-label">Login</label>
-                <input type="text" class="form-control" id="login" name="login" required>
-            </div>
-            <div class="mb-4">
-                <label for="senha" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="senha" name="senha" required>
-            </div>
-            <div class="d-grid">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-sign-in-alt me-2"></i>Entrar
-                </button>
-            </div>
-        </form>
-        <div class="text-center mt-3">
-            <p class="mb-0">Não possui uma conta? <a href="/register" class="text-decoration-none">Cadastre-se aqui</a></p>
-        </div>
-    </div>
-</div>
+{{! views/login.hbs }}
 
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Usuários de Demonstração</h5>
+<style>
+    /* Estilos gerais da página */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        box-sizing: border-box;
+    }
+
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 900px; /* Aumentamos a largura máxima */
+    }
+
+    /* Estilos para o formulário de login */
+    .form-card {
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
+    .form-card h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-card p {
+        text-align: center;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 0.8rem;
+        border: none;
+        border-radius: 0.5rem;
+        background: linear-gradient(to right, #667eea, #764ba2);
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .register-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .register-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    /* --- CORREÇÃO DO LAYOUT DOS USUÁRIOS DE DEMONSTRAÇÃO --- */
+    .demo-users-card {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-users-card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: #374151;
+    }
+
+    .demo-users-grid {
+        display: grid;
+        /* Usamos grid para melhor controle */
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .user-profile-card {
+        background-color: #f9fafb;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+    }
+    
+    .user-profile-card h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .user-profile-card p {
+        font-size: 0.9rem;
+        color: #4b5563;
+        line-height: 1.5;
+    }
+
+    .user-profile-card strong {
+        color: #1f2937;
+    }
+
+</style>
+
+<div class="login-container">
+    <div class="form-card">
+        <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+        <p>Acesse o Sistema de Reservas</p>
+
+        {{#if error_msg}}
+            <div class="alert alert-danger">{{error_msg}}</div>
+        {{/if}}
+        {{#if success_msg}}
+            <div class="alert alert-success">{{success_msg}}</div>
+        {{/if}}
+
+        <form action="/login" method="POST">
+            <div class="form-group">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-arrow-right"></i> Entrar
+            </button>
+        </form>
+        <p class="register-link">
+            Não possui uma conta? <a href="/register">Cadastre-se aqui</a>
+        </p>
     </div>
-    <div class="card-body">
-        <p class="text-muted mb-3">Use as credenciais abaixo para acessar o sistema:</p>
-        
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card border-primary">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary">
-                            <i class="fas fa-user-shield me-2"></i>Administrador
-                        </h6>
-                        <p class="mb-2"><strong>Login:</strong> admin</p>
-                        <p class="mb-2"><strong>Senha:</strong> 1234</p>
-                        <p class="text-muted small mb-0">Acesso total ao sistema</p>
-                    </div>
-                </div>
+
+    <div class="demo-users-card">
+        <h3><i class="fas fa-users"></i> Usuários de Demonstração</h3>
+        <div class="demo-users-grid">
+            
+            <div class="user-profile-card">
+                <h4><i class="fas fa-user-shield"></i> Administrador</h4>
+                <p>
+                    <strong>Login:</strong> admin<br>
+                    <strong>Senha:</strong> admin123<br>
+                    <small>Acesso total ao sistema.</small>
+                </p>
             </div>
-            <div class="col-md-4">
-                <div class="card border-warning">
-                    <div class="card-body">
-                        <h6 class="card-title text-warning">
-                            <i class="fas fa-user-cog me-2"></i>Gestor
-                        </h6>
-                        <p class="mb-2"><strong>Login:</strong> gestor</p>
-                        <p class="mb-2"><strong>Senha:</strong> 1234</p>
-                        <p class="text-muted small mb-0">Gerencia espaços e reservas</p>
-                    </div>
-                </div>
+
+            <div class="user-profile-card">
+                <h4><i class="fas fa-user-tie"></i> Gestor</h4>
+                <p>
+                    <strong>Login:</strong> gestor<br>
+                    <strong>Senha:</strong> gestor123<br>
+                    <small>Gerencia espaços e reservas.</small>
+                </p>
             </div>
-            <div class="col-md-4">
-                <div class="card border-success">
-                    <div class="card-body">
-                        <h6 class="card-title text-success">
-                            <i class="fas fa-user me-2"></i>Usuário Comum
-                        </h6>
-                        <p class="mb-2"><strong>Login:</strong> usuario</p>
-                        <p class="mb-2"><strong>Senha:</strong> 1234</p>
-                        <p class="text-muted small mb-0">Acesso às próprias reservas</p>
-                    </div>
-                </div>
+
+            <div class="user-profile-card">
+                <h4><i class="fas fa-user"></i> Usuário Comum</h4>
+                <p>
+                    <strong>Login:</strong> usuario<br>
+                    <strong>Senha:</strong> usuario123<br>
+                    <small>Acessa e cria as próprias reservas.</small>
+                </p>
             </div>
-        </div>
-        
-        <div class="alert alert-info mt-3 mb-0">
-            <i class="fas fa-lightbulb me-2"></i>
-            <strong>Dica:</strong> Teste diferentes tipos de usuários para explorar todas as funcionalidades do sistema.
+
         </div>
     </div>
 </div>
