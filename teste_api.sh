@@ -3,7 +3,7 @@
 # e testar os endpoints de CRUD para as entidades principais.
 
 # Variáveis para facilitar (ajuste a porta se for diferente)
-API_URL="http://localhost:3000/api"
+API_URL="http://localhost:8081/api"
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASS="password123"
 USER_EMAIL="user@example.com"
