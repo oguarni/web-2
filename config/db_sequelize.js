@@ -1,13 +1,16 @@
-const Sequelize = require('sequelize');
+const { Sequelize } = require('sequelize');
 const { Client } = require('pg');
 
-// Configuração do banco de dados
+// Carrega as variáveis de ambiente do arquivo .env
+require('dotenv').config();
+
+// Configuração do banco de dados usando variáveis de ambiente
 const DB_CONFIG = {
-    database: process.env.DB_NAME || 'web2_db',
-    username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASS || '1234',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+    database: process.env.POSTGRES_DB,
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
     dialect: 'postgres',
     dialectOptions: {
         ssl: process.env.NODE_ENV === 'production' ? { require: true, rejectUnauthorized: false } : false
@@ -18,7 +21,8 @@ const DB_CONFIG = {
         acquire: 30000,
         idle: 10000
     },
-    logging: process.env.NODE_ENV === 'development' ? console.log : false
+    // Adicionado para suprimir logs do sequelize no terminal
+    logging: false
 };
 
 // Função para criar o banco de dados se não existir
@@ -54,10 +58,30 @@ const createDatabaseIfNotExists = async () => {
 // Cria a instância do Sequelize
 const sequelize = new Sequelize(DB_CONFIG.database, DB_CONFIG.username, DB_CONFIG.password, DB_CONFIG);
 
+// Função para testar a conexão e inicializar o banco
+const connectAndSync = async () => {
+    try {
+        await sequelize.authenticate();
+        console.log('✅ PostgreSQL: Conexão estabelecida com sucesso.');
+
+        // Sincroniza os modelos com o banco de dados.
+        // CUIDADO: `force: true` apaga e recria as tabelas. Use com cautela.
+        // Em desenvolvimento, pode ser útil. Em produção, use migrations.
+        await sequelize.sync({ force: false });
+        console.log('✅ PostgreSQL: Modelos sincronizados com o banco de dados.');
+
+    } catch (error) {
+        console.error('❌ Erro ao conectar ou sincronizar com o PostgreSQL:', error);
+        // Encerra o processo se não conseguir conectar ao banco, para o Docker reiniciar o contêiner.
+        process.exit(1);
+    }
+};
+
 var db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.createDatabaseIfNotExists = createDatabaseIfNotExists;
+db.connectAndSync = connectAndSync;
 
 // Import relational models
 db.Usuario = require('../models/relational/usuario.js')(sequelize, Sequelize);

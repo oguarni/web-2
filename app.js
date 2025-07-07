@@ -126,42 +126,6 @@ const createSampleData = async () => {
     }
 };
 
-// Inicialização do banco de dados
-const initializeDatabase = async () => {
-    try {
-        // Criar banco PostgreSQL se não existir
-        await db.createDatabaseIfNotExists();
-        
-        // Conectar ao MongoDB
-        await connectDB();
-        
-        // Verificar se tabelas existem
-        const tablesExist = await checkTablesExist();
-        
-        if (!tablesExist) {
-            console.log('Sincronizando banco de dados...');
-            await db.sequelize.sync({ force: false });
-            console.log('Sincronização concluída');
-            
-            // Criar usuários padrão
-            await createDefaultUsers();
-            
-            // Criar dados de exemplo
-            await createSampleData();
-        } else {
-            console.log('Banco de dados já sincronizado');
-        }
-        
-        console.log('Inicialização do banco de dados concluída');
-    } catch (error) {
-        console.error('Erro na inicialização do banco de dados:', error);
-        process.exit(1);
-    }
-};
-
-// Inicializar banco de dados
-initializeDatabase();
-
 // View engine setup
 app.engine('hbs', exphbs.engine({
     extname: '.hbs',
@@ -274,8 +238,45 @@ app.use(notFoundHandler);
 // Global error handler (must be last)
 app.use(errorHandler);
 
-// Iniciar servidor
+// ===================================================================
+//  BLOCO DE INICIALIZAÇÃO FINAL
+// ===================================================================
+
 const PORT = process.env.PORT || 8082;
-app.listen(PORT, function(){
-    console.log(`Servidor no http://localhost:${PORT}`);
-});
+
+// Esta será a ÚNICA função que inicia tudo
+const startApplication = async () => {
+    try {
+        console.log('Iniciando a inicialização da aplicação...');
+
+        // --- Sua lógica de inicialização do banco de dados ---
+        await db.createDatabaseIfNotExists();
+        await db.connectAndSync();
+        await connectDB(); // Sua função de conexão com o MongoDB
+
+        // Sua lógica para popular o banco de dados
+        const tablesExist = await checkTablesExist();
+        if (!tablesExist) {
+            console.log('Criando dados iniciais...');
+            await createDefaultUsers();
+            await createSampleData();
+        } else {
+            console.log('Dados iniciais já existem.');
+        }
+        console.log('✅ Inicialização do banco de dados concluída.');
+        // --- Fim da sua lógica ---
+
+        // Finalmente, inicia o servidor Express
+        app.listen(PORT, () => {
+            console.log(`✅ Servidor rodando com sucesso na porta ${PORT}`);
+            console.log(`📚 API Docs disponível em: http://localhost:${PORT}/api/docs`);
+        });
+
+    } catch (error) {
+        console.error('❌ Falha crítica ao iniciar a aplicação:', error);
+        process.exit(1); // Encerra o processo se algo der errado
+    }
+};
+
+// Chama a função para iniciar todo o processo
+startApplication();
