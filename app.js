@@ -43,7 +43,6 @@ const createDefaultUsers = async () => {
                 senha: hashedPassword,
                 tipo: 1
             });
-            console.log('Usuário admin criado com sucesso');
         }
 
         const userExists = await db.Usuario.findOne({ where: { login: 'usuario' } });
@@ -55,7 +54,6 @@ const createDefaultUsers = async () => {
                 senha: hashedPassword,
                 tipo: 2
             });
-            console.log('Usuário comum criado com sucesso');
         }
 
         const gestorExists = await db.Usuario.findOne({ where: { login: 'gestor' } });
@@ -67,7 +65,6 @@ const createDefaultUsers = async () => {
                 senha: hashedPassword,
                 tipo: 3
             });
-            console.log('Usuário gestor criado com sucesso');
         }
     } catch (error) {
         console.error('Erro ao criar usuários padrão:', error);
@@ -88,7 +85,6 @@ const createSampleData = async () => {
                 { nome: 'Quadro Branco', descricao: 'Quadro para anotações' },
                 { nome: 'Mesa de Reunião', descricao: 'Mesa grande para reuniões' }
             ]);
-            console.log('Amenidades de exemplo criadas');
         } else {
             amenities = await db.Amenity.findAll();
         }
@@ -102,7 +98,6 @@ const createSampleData = async () => {
                 { nome: 'Auditório', descricao: 'Espaço para apresentações', capacidade: 50, localizacao: '1º Andar', ativo: true },
                 { nome: 'Sala de Treinamento', descricao: 'Sala para treinamentos', capacidade: 20, localizacao: '2º Andar', ativo: true }
             ]);
-            console.log('Espaços de exemplo criados');
         } else {
             espacos = await db.Espaco.findAll();
         }
@@ -119,7 +114,6 @@ const createSampleData = async () => {
             // Sala de Treinamento: WiFi, Projetor, Quadro Branco, Mesa de Reunião
             await espacos[2].addAmenities([amenities[0], amenities[1], amenities[3], amenities[4]]);
             
-            console.log('Associações N:N Espaco-Amenity criadas');
         }
     } catch (error) {
         console.error('Erro ao criar dados de exemplo:', error);
@@ -260,7 +254,6 @@ const PORT = process.env.PORT || 8082;
 // Esta será a ÚNICA função que inicia tudo
 const startApplication = async () => {
     try {
-        console.log('Iniciando a inicialização da aplicação...');
 
         // --- Sua lógica de inicialização do banco de dados ---
         await db.createDatabaseIfNotExists();
@@ -270,19 +263,14 @@ const startApplication = async () => {
         // Sua lógica para popular o banco de dados
         const tablesExist = await checkTablesExist();
         if (!tablesExist) {
-            console.log('Criando dados iniciais...');
             await createDefaultUsers();
             await createSampleData();
         } else {
-            console.log('Dados iniciais já existem.');
         }
-        console.log('✅ Inicialização do banco de dados concluída.');
         // --- Fim da sua lógica ---
 
         // Finalmente, inicia o servidor Express
         app.listen(PORT, () => {
-            console.log(`✅ Servidor rodando com sucesso na porta ${PORT}`);
-            console.log(`📚 API Docs disponível em: http://localhost:${PORT}/api/docs`);
         });
 
     } catch (error) {

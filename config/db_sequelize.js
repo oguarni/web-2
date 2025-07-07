@@ -43,9 +43,7 @@ const createDatabaseIfNotExists = async () => {
         
         if (result.rows.length === 0) {
             await client.query(`CREATE DATABASE "${DB_CONFIG.database}"`);
-            console.log(`Database ${DB_CONFIG.database} created successfully`);
         } else {
-            console.log(`Database ${DB_CONFIG.database} already exists`);
         }
     } catch (error) {
         console.error('Error creating database:', error.message);
@@ -62,13 +60,11 @@ const sequelize = new Sequelize(DB_CONFIG.database, DB_CONFIG.username, DB_CONFI
 const connectAndSync = async () => {
     try {
         await sequelize.authenticate();
-        console.log('✅ PostgreSQL: Conexão estabelecida com sucesso.');
 
         // Sincroniza os modelos com o banco de dados.
         // CUIDADO: `force: true` apaga e recria as tabelas. Use com cautela.
         // Em desenvolvimento, pode ser útil. Em produção, use migrations.
         await sequelize.sync({ force: false });
-        console.log('✅ PostgreSQL: Modelos sincronizados com o banco de dados.');
 
     } catch (error) {
         console.error('❌ Erro ao conectar ou sincronizar com o PostgreSQL:', error);

@@ -5,9 +5,7 @@ const Log = require('../../models/noSql/log');
 // Connect to MongoDB if not already connected
 if (mongoose.connection.readyState === 0) {
     connectDB().then(() => {
-        console.log('Connected to MongoDB for logs');
     }).catch((err) => {
-        console.log('MongoDB connection error:', err);
     });
 }
 
