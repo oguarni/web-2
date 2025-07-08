@@ -4,17 +4,17 @@ const session = require('express-session');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('./config/db_sequelize');
-const { connectDB } = require('./config/db_mongoose');
+const connectMongo = require('./config/db_mongoose');
 const webRoutes = require('./routers/web');
 const apiRoutes = require('./routers/api');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
-const { errorHandler } = require('./middlewares/errorHandler');
+const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 
 // Conectar ao MongoDB
-connectDB();
+connectMongo();
 
 // Middlewares
 app.use(express.json());

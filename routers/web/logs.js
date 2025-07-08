@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const logController = require('../../controllers/web/logController');
-const webAuth = require('../../middlewares/webAuth');
+const { requireAuth, requireAdmin } = require('../../middlewares/webAuth');
 
 // All log routes require authentication and admin privileges
-router.use(webAuth.auth);
-router.use(webAuth.admin);
+router.use(requireAuth);
+router.use(requireAdmin);
 
 // GET /logs
 router.get('/', logController.index);

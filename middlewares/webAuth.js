@@ -1,38 +1,47 @@
-const authHelpers = require('./authHelpers');
-
-const webAuth = {};
-
-// Middleware para permitir acesso apenas a convidados (não logados)
-webAuth.guest = (req, res, next) => {
-    if (!authHelpers.isAuthenticated(req)) {
-        return next();
+const requireAuth = (req, res, next) => {
+    if (!req.session.user) {
+        req.flash('error', 'Você precisa estar logado para acessar esta página');
+        return res.redirect('/login');
     }
-    res.redirect('/dashboard');
+    next();
 };
 
-// Middleware para proteger rotas que exigem autenticação
-webAuth.auth = (req, res, next) => {
-    if (authHelpers.isAuthenticated(req)) {
-        return next();
+const requireAdmin = (req, res, next) => {
+    if (!req.session.user || req.session.user.tipo !== 1) {
+        req.flash('error', 'Acesso negado. Apenas administradores podem acessar esta página');
+        return res.redirect('/dashboard');
     }
-    res.redirect('/login');
+    next();
 };
 
-// Middleware para proteger rotas de administrador
-webAuth.admin = (req, res, next) => {
-    if (authHelpers.hasRole(req, 'admin')) {
-        return next();
+const requireAdminOrGestor = (req, res, next) => {
+    if (!req.session.user || (req.session.user.tipo !== 1 && req.session.user.tipo !== 3)) {
+        req.flash('error', 'Acesso negado. Apenas administradores e gestores podem acessar esta página');
+        return res.redirect('/dashboard');
     }
-    res.status(403).send('Acesso negado. Requer perfil de Administrador.');
+    next();
 };
 
-// Middleware para proteger rotas de gestor
-webAuth.manager = (req, res, next) => {
-    // Permite acesso a gestores e também a administradores
-    if (authHelpers.hasRole(req, 'gestor') || authHelpers.hasRole(req, 'admin')) {
-        return next();
+const redirectIfAuthenticated = (req, res, next) => {
+    if (req.session.user) {
+        return res.redirect('/dashboard');
     }
-    res.status(403).send('Acesso negado. Requer perfil de Gestor ou Administrador.');
+    next();
 };
 
-module.exports = webAuth;
+const addUserToViews = (req, res, next) => {
+    res.locals.user = req.session.user || null;
+    res.locals.isAuthenticated = !!req.session.user;
+    res.locals.isAdmin = req.session.user && req.session.user.tipo === 1;
+    res.locals.isGestor = req.session.user && req.session.user.tipo === 3;
+    res.locals.isComum = req.session.user && req.session.user.tipo === 2;
+    next();
+};
+
+module.exports = {
+    requireAuth,
+    requireAdmin,
+    requireAdminOrGestor,
+    redirectIfAuthenticated,
+    addUserToViews
+};

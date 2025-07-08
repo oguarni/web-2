@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const espacoController = require('../../controllers/web/espacoController');
-const webAuth = require('../../middlewares/webAuth');
+const { requireAuth, requireAdminOrGestor } = require('../../middlewares/webAuth');
 
 // All espaco routes require authentication and admin/gestor privileges
-router.use(webAuth.auth);
-router.use(webAuth.manager);
+router.use(requireAuth);
+router.use(requireAdminOrGestor);
 
 // GET /espacos
 router.get('/', espacoController.index);

@@ -1,18 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../../controllers/web/authController');
-// Corrigido: Importa o objeto webAuth e pega as funções dele
-const webAuth = require('../../middlewares/webAuth'); 
-const { validate } = require('../../middlewares/validation');
-const { loginSchema } = require('../../validators/authValidator');
+const { redirectIfAuthenticated, requireAuth } = require('../../middlewares/webAuth');
 
-// Rota para exibir o formulário de login
-router.get('/login', webAuth.guest, authController.showLoginForm);
+// Login routes
+router.get('/login', redirectIfAuthenticated, authController.loginForm);
+router.post('/login', redirectIfAuthenticated, authController.login);
 
-// Rota para processar o login
-router.post('/login', webAuth.guest, validate(loginSchema), authController.login);
+// Register routes
+router.get('/register', redirectIfAuthenticated, authController.registerForm);
+router.post('/register', redirectIfAuthenticated, authController.register);
 
-// Rota para processar o logout
-router.post('/logout', webAuth.auth, authController.logout);
+// Logout route
+router.get('/logout', authController.logout);
+
+// Dashboard route
+router.get('/dashboard', requireAuth, authController.dashboard);
 
 module.exports = router;

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const espacoAmenityController = require('../../controllers/web/espacoAmenityController');
-const webAuth = require('../../middlewares/webAuth');
+const { requireAuth, requireAdminOrGestor } = require('../../middlewares/webAuth');
 
 // All espaco-amenity routes require authentication and admin/gestor privileges
-router.use(webAuth.auth);
-router.use(webAuth.manager);
+router.use(requireAuth);
+router.use(requireAdminOrGestor);
 
 // GET /espaco-amenities
 router.get('/', espacoAmenityController.index);

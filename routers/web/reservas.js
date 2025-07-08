@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const reservaController = require('../../controllers/web/reservaController');
-const webAuth = require('../../middlewares/webAuth');
+const { requireAuth } = require('../../middlewares/webAuth');
 
 // All reserva routes require authentication
-router.use(webAuth.auth);
+router.use(requireAuth);
 
 // GET /reservas
 router.get('/', reservaController.index);
