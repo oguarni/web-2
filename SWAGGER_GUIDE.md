@@ -12,7 +12,7 @@ npm start
 ```
 
 ### 2. Acessar a Interface Swagger
-- **URL:** `http://localhost:8081/api/docs`
+- **URL:** `http://localhost:8081/api-docs`
 - **Interface:** Swagger UI interativa
 - **Recursos:** Teste direto dos endpoints
 
@@ -163,7 +163,7 @@ POST /api/auth/login
 - Testes diretos na interface
 
 ### 🔗 **Links Úteis**
-- **Documentação:** `http://localhost:8081/api/docs`
+- **Documentação:** `http://localhost:8081/api-docs`
 - **API Base:** `http://localhost:8081/api`
 - **Health Check:** `http://localhost:8081/`
 

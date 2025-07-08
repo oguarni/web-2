@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Spaces from './pages/Spaces';
 import Amenities from './pages/Amenities';
 import Reservations from './pages/Reservations';
+import Users from './pages/Users';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -45,6 +46,12 @@ function App() {
               <ProtectedRoute>
                 <Navigation />
                 <Reservations />
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <Navigation />
+                <Users />
               </ProtectedRoute>
             } />
           </Routes>

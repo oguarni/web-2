@@ -1,5 +1,6 @@
 const db = require('../../config/db_sequelize');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { asyncHandler, UnauthorizedError } = require('../../middlewares/errorHandler');
 
 // Ensure JWT_SECRET is set in your environment variables
@@ -11,10 +12,16 @@ module.exports = {
         const { login, senha } = req.body;
         
         const usuario = await db.Usuario.findOne({ 
-            where: { login, senha } 
+            where: { login } 
         });
         
         if (!usuario) {
+            throw new UnauthorizedError('Invalid credentials');
+        }
+        
+        // Compare password with bcrypt
+        const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
+        if (!isPasswordValid) {
             throw new UnauthorizedError('Invalid credentials');
         }
         
@@ -36,6 +43,19 @@ module.exports = {
                 nome: usuario.nome,
                 login: usuario.login,
                 tipo: usuario.tipo
+            }
+        });
+    }),
+
+    // GET /api/auth/me
+    me: asyncHandler(async (req, res) => {
+        res.json({
+            success: true,
+            user: {
+                id: req.user.id,
+                nome: req.user.nome,
+                login: req.user.login,
+                tipo: req.user.tipo
             }
         });
     })

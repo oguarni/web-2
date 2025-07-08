@@ -3,18 +3,21 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { engine } = require('express-handlebars');
+const methodOverride = require('method-override');
+const flash = require('connect-flash');
 const db = require('./config/db_sequelize');
-const connectMongo = require('./config/db_mongoose');
-const webRoutes = require('./routers/web');
+const { connectDB } = require('./config/db_mongoose');
+const webRoutes = require('./routers/web/index');
 const apiRoutes = require('./routers/api');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
-const errorHandler = require('./middlewares/errorHandler');
+const { errorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
 
 // Conectar ao MongoDB
-connectMongo();
+connectDB();
 
 // Middlewares
 app.use(express.json());
@@ -28,6 +31,30 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
+
+// Configuração do view engine Handlebars
+app.engine('hbs', engine({
+    extname: '.hbs',
+    defaultLayout: 'main',
+    layoutsDir: path.join(__dirname, 'views/layouts'),
+    partialsDir: path.join(__dirname, 'views/partials'),
+    helpers: {
+        eq: (a, b) => a === b,
+        tipoUsuario: (tipo) => {
+            const tipos = { 1: 'Administrador', 2: 'Usuário', 3: 'Gestor' };
+            return tipos[tipo] || 'Desconhecido';
+        },
+        formatDateTime: (date) => {
+            return new Date(date).toLocaleString('pt-BR');
+        }
+    }
+}));
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Middlewares adicionais
+app.use(methodOverride('_method'));
+app.use(flash());
 
 // --- Lógica para criar dados iniciais ---
 
@@ -88,6 +115,10 @@ const createSampleData = async () => {
 };
 
 // --- Fim da lógica de dados iniciais ---
+
+// Middleware para disponibilizar dados do usuário nas views
+const { addUserToViews } = require('./middlewares/webAuth');
+app.use(addUserToViews);
 
 // Rotas
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

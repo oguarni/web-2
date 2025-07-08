@@ -45,6 +45,21 @@ services:
       - .:/usr/src/app
       - node_modules_data:/usr/src/app/node_modules
 
+  client:
+    build: ./client
+    container_name: react_client
+    ports:
+      - "3001:3000"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
 volumes:
   postgres_data:
   mongo_data:

@@ -113,3 +113,11 @@ exports.logout = (req, res) => {
         res.redirect('/login');
     });
 };
+
+// Controller para exibir o dashboard
+exports.dashboard = (req, res) => {
+    res.render('dashboard/index', {
+        title: 'Dashboard',
+        user: req.session.user
+    });
+};

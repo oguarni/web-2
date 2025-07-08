@@ -38,10 +38,44 @@ const addUserToViews = (req, res, next) => {
     next();
 };
 
+const isAuthenticated = (req, res, next) => {
+    if (!req.session.user) {
+        req.flash('error', 'Você precisa estar logado para acessar esta página');
+        return res.redirect('/login');
+    }
+    next();
+};
+
+const checkRole = (allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.session.user) {
+            req.flash('error', 'Você precisa estar logado para acessar esta página');
+            return res.redirect('/login');
+        }
+
+        const userRoleMap = {
+            1: 'admin',
+            2: 'client',
+            3: 'manager'
+        };
+
+        const userRole = userRoleMap[req.session.user.tipo];
+        
+        if (!allowedRoles.includes(userRole)) {
+            req.flash('error', 'Você não tem permissão para acessar esta página');
+            return res.redirect('/dashboard');
+        }
+        
+        next();
+    };
+};
+
 module.exports = {
     requireAuth,
     requireAdmin,
     requireAdminOrGestor,
     redirectIfAuthenticated,
-    addUserToViews
+    addUserToViews,
+    isAuthenticated,
+    checkRole
 };

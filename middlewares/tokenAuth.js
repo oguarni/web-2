@@ -34,7 +34,40 @@ const requireAdmin = (req, res, next) => {
     next(new ForbiddenError('Admin access required'));
 };
 
+// Middleware to require admin or manager privileges
+const requireAdminOrManager = (req, res, next) => {
+    if (req.user && (req.user.tipo === 1 || req.user.tipo === 3)) {
+        return next();
+    }
+    next(new ForbiddenError('Admin or manager access required'));
+};
+
+// Generic role checking middleware
+const checkRole = (allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return next(new UnauthorizedError('Access token is required'));
+        }
+
+        const userRoleMap = {
+            1: 'admin',
+            2: 'client',
+            3: 'manager'
+        };
+
+        const userRole = userRoleMap[req.user.tipo];
+        
+        if (!allowedRoles.includes(userRole)) {
+            return next(new ForbiddenError('Insufficient permissions'));
+        }
+        
+        next();
+    };
+};
+
 module.exports = {
     validateToken,
-    requireAdmin
+    requireAdmin,
+    requireAdminOrManager,
+    checkRole
 };

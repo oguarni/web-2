@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navigation = () => {
-  const { user, logout, isAdminOrGestor } = useAuth();
+  const { user, logout, isAdmin, isAdminOrGestor } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -28,6 +28,9 @@ const Navigation = () => {
                 <Nav.Link as={Link} to="/spaces">Espaços</Nav.Link>
                 <Nav.Link as={Link} to="/amenities">Amenidades</Nav.Link>
               </>
+            )}
+            {isAdmin() && (
+              <Nav.Link as={Link} to="/users">Usuários</Nav.Link>
             )}
           </Nav>
           <Nav>

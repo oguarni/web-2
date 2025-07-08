@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert } from 'react-bootstrap';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { amenitiesAPI } from '../services/api';
 
 const Amenities = () => {
   const { isAdminOrGestor } = useAuth();
@@ -21,7 +21,7 @@ const Amenities = () => {
 
   const fetchAmenities = async () => {
     try {
-      const response = await axios.get('/api/amenities');
+      const response = await amenitiesAPI.getAll();
       setAmenities(response.data);
     } catch (error) {
       setError('Erro ao carregar amenidades');
@@ -35,10 +35,10 @@ const Amenities = () => {
 
     try {
       if (editingAmenity) {
-        await axios.put(`/api/amenities/${editingAmenity.id}`, formData);
+        await amenitiesAPI.update(editingAmenity.id, formData);
         setSuccess('Amenidade atualizada com sucesso!');
       } else {
-        await axios.post('/api/amenities', formData);
+        await amenitiesAPI.create(formData);
         setSuccess('Amenidade criada com sucesso!');
       }
       
@@ -63,7 +63,7 @@ const Amenities = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta amenidade?')) {
       try {
-        await axios.delete(`/api/amenities/${id}`);
+        await amenitiesAPI.delete(id);
         setSuccess('Amenidade excluída com sucesso!');
         fetchAmenities();
       } catch (error) {

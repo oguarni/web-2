@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { reservationsAPI, spacesAPI } from '../services/api';
 
 const Reservations = () => {
   const { user, isAdminOrGestor } = useAuth();
@@ -26,7 +26,7 @@ const Reservations = () => {
 
   const fetchReservations = async () => {
     try {
-      const response = await axios.get('/api/reservas');
+      const response = await reservationsAPI.getAll();
       setReservations(response.data);
     } catch (error) {
       setError('Erro ao carregar reservas');
@@ -35,7 +35,7 @@ const Reservations = () => {
 
   const fetchSpaces = async () => {
     try {
-      const response = await axios.get('/api/espacos');
+      const response = await spacesAPI.getAll();
       setSpaces(response.data.filter(space => space.ativo));
     } catch (error) {
       console.error('Erro ao carregar espaços');
@@ -54,10 +54,10 @@ const Reservations = () => {
       };
 
       if (editingReservation) {
-        await axios.put(`/api/reservas/${editingReservation.id}`, submitData);
+        await reservationsAPI.update(editingReservation.id, submitData);
         setSuccess('Reserva atualizada com sucesso!');
       } else {
-        await axios.post('/api/reservas', submitData);
+        await reservationsAPI.create(submitData);
         setSuccess('Reserva criada com sucesso!');
       }
       
@@ -85,7 +85,7 @@ const Reservations = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta reserva?')) {
       try {
-        await axios.delete(`/api/reservas/${id}`);
+        await reservationsAPI.delete(id);
         setSuccess('Reserva excluída com sucesso!');
         fetchReservations();
       } catch (error) {

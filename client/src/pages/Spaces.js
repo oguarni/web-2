@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { spacesAPI, amenitiesAPI } from '../services/api';
 
 const Spaces = () => {
   const { isAdminOrGestor } = useAuth();
@@ -27,7 +27,7 @@ const Spaces = () => {
 
   const fetchSpaces = async () => {
     try {
-      const response = await axios.get('/api/espacos');
+      const response = await spacesAPI.getAll();
       setSpaces(response.data);
     } catch (error) {
       setError('Erro ao carregar espaços');
@@ -36,7 +36,7 @@ const Spaces = () => {
 
   const fetchAmenities = async () => {
     try {
-      const response = await axios.get('/api/amenities');
+      const response = await amenitiesAPI.getAll();
       setAmenities(response.data);
     } catch (error) {
       console.error('Erro ao carregar amenidades');
@@ -55,10 +55,10 @@ const Spaces = () => {
       };
 
       if (editingSpace) {
-        await axios.put(`/api/espacos/${editingSpace.id}`, submitData);
+        await spacesAPI.update(editingSpace.id, submitData);
         setSuccess('Espaço atualizado com sucesso!');
       } else {
-        await axios.post('/api/espacos', submitData);
+        await spacesAPI.create(submitData);
         setSuccess('Espaço criado com sucesso!');
       }
       
@@ -87,7 +87,7 @@ const Spaces = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este espaço?')) {
       try {
-        await axios.delete(`/api/espacos/${id}`);
+        await spacesAPI.delete(id);
         setSuccess('Espaço excluído com sucesso!');
         fetchSpaces();
       } catch (error) {

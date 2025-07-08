@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Verify token validity
       checkToken();
     } else {
@@ -28,7 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkToken = async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await authAPI.verifyToken();
       setUser(response.data.user);
     } catch (error) {
       // Token is invalid
@@ -40,13 +39,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (loginData) => {
     try {
-      const response = await axios.post('/api/auth/login', loginData);
+      const response = await authAPI.login(loginData);
       const { token: newToken, user: userData } = response.data;
       
       setToken(newToken);
       setUser(userData);
       localStorage.setItem('token', newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       
       return { success: true };
     } catch (error) {
@@ -61,7 +59,6 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   const isAdmin = () => {
