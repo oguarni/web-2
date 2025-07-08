@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
-import { spacesAPI, amenitiesAPI } from '../services/api';
+import { spacesAPI } from '../services/api';
 
 const Spaces = () => {
   const { isAdminOrGestor } = useAuth();
   const [spaces, setSpaces] = useState([]);
-  const [amenities, setAmenities] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingSpace, setEditingSpace] = useState(null);
   const [formData, setFormData] = useState({
@@ -22,7 +21,6 @@ const Spaces = () => {
 
   useEffect(() => {
     fetchSpaces();
-    fetchAmenities();
   }, []);
 
   const fetchSpaces = async () => {
@@ -34,14 +32,6 @@ const Spaces = () => {
     }
   };
 
-  const fetchAmenities = async () => {
-    try {
-      const response = await amenitiesAPI.getAll();
-      setAmenities(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar amenidades');
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();

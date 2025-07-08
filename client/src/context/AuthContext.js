@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
@@ -16,16 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
 
-  useEffect(() => {
-    if (token) {
-      // Verify token validity
-      checkToken();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
-
-  const checkToken = async () => {
+  const checkToken = useCallback(async () => {
     try {
       const response = await authAPI.verifyToken();
       setUser(response.data.user);
@@ -35,7 +26,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      // Verify token validity
+      checkToken();
+    } else {
+      setLoading(false);
+    }
+  }, [token, checkToken]);
 
   const login = async (loginData) => {
     try {

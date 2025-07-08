@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -12,11 +12,7 @@ const Dashboard = () => {
     reservasHoje: 0
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const [reservasRes, espacosRes, amenidadesRes] = await Promise.all([
         axios.get('/api/reservas'),
@@ -38,7 +34,11 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
     }
-  };
+  }, [isAdminOrGestor]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   return (
     <Container className="mt-4">

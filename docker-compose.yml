@@ -32,7 +32,9 @@ services:
   app:
     build: .
     restart: unless-stopped
+    container_name: app_server
     ports:
+      # Apenas a porta 8081 é exposta. Ela servirá a API, o MVC e o React.
       - "8081:8081"
     depends_on:
       postgres:
@@ -40,25 +42,16 @@ services:
       mongodb:
         condition: service_healthy
     env_file:
-      - .env
+      - .env # Garanta que seu .env tem DB_HOST=postgres
     volumes:
+      # Monta o código fonte para refletir alterações (exceto node_modules)
       - .:/usr/src/app
+      # Monta o build do React para ser servido pelo Express
+      - ./client/build:/usr/src/app/client/build
+      # Isola o node_modules dentro do container para evitar conflitos
       - node_modules_data:/usr/src/app/node_modules
 
-  client:
-    build: ./client
-    container_name: react_client
-    ports:
-      - "3001:3000"
-    stdin_open: true
-    tty: true
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-    depends_on:
-      - app
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+# O serviço 'client' foi removido, pois o 'app' agora serve a aplicação React.
 
 volumes:
   postgres_data:

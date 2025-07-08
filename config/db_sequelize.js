@@ -1,114 +1,65 @@
+require('dotenv').config(); // Garante que as variáveis do .env sejam carregadas
 const { Sequelize } = require('sequelize');
-const { Client } = require('pg');
 
-// Carrega as variáveis de ambiente do arquivo .env
-require('dotenv').config();
-
-// Configuração do banco de dados usando variáveis de ambiente
-const DB_CONFIG = {
-    database: process.env.POSTGRES_DB,
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    dialect: 'postgres',
-    dialectOptions: {
-        ssl: process.env.NODE_ENV === 'production' ? { require: true, rejectUnauthorized: false } : false
-    },
-    pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-    },
-    // Adicionado para suprimir logs do sequelize no terminal
-    logging: false
-};
-
-// Função para criar o banco de dados se não existir
-const createDatabaseIfNotExists = async () => {
-    const client = new Client({
-        host: DB_CONFIG.host,
-        port: DB_CONFIG.port,
-        user: DB_CONFIG.username,
-        password: DB_CONFIG.password,
-        database: 'postgres' // conecta ao banco padrão postgres
-    });
-
-    try {
-        await client.connect();
-        const result = await client.query(
-            `SELECT 1 FROM pg_database WHERE datname = '${DB_CONFIG.database}'`
-        );
-        
-        if (result.rows.length === 0) {
-            await client.query(`CREATE DATABASE "${DB_CONFIG.database}"`);
-        } else {
-        }
-    } catch (error) {
-        console.error('Error creating database:', error.message);
-        throw error;
-    } finally {
-        await client.end();
+// --- CORREÇÃO APLICADA AQUI ---
+// Inicializa o Sequelize usando as variáveis de ambiente diretamente,
+// em vez de usar o arquivo config.json que não processa as variáveis.
+const sequelize = new Sequelize(
+    process.env.POSTGRES_DB,
+    process.env.POSTGRES_USER,
+    process.env.POSTGRES_PASSWORD,
+    {
+        host: process.env.POSTGRES_HOST, // O host deve ser 'postgres' para o Docker
+        dialect: 'postgres',
+        logging: false // Desativa os logs SQL no console para um output mais limpo
     }
-};
+);
 
-// Cria a instância do Sequelize
-const sequelize = new Sequelize(DB_CONFIG.database, DB_CONFIG.username, DB_CONFIG.password, DB_CONFIG);
+const db = {};
 
-// Função para testar a conexão e inicializar o banco
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+// Importa os modelos
+db.Usuario = require('../models/relational/usuario')(sequelize, Sequelize);
+db.Espaco = require('../models/relational/espaco')(sequelize, Sequelize);
+db.Amenity = require('../models/relational/amenity')(sequelize, Sequelize);
+db.Reserva = require('../models/relational/reserva')(sequelize, Sequelize);
+db.EspacoAmenity = require('../models/relational/espacoAmenity')(sequelize, Sequelize);
+
+// --- Definição das Associações ---
+
+// Relação 1:N - Utilizador pode ter várias Reservas
+db.Usuario.hasMany(db.Reserva, { foreignKey: 'usuarioId', as: 'reservas' });
+db.Reserva.belongsTo(db.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+
+// Relação 1:N - Espaço pode ter várias Reservas
+db.Espaco.hasMany(db.Reserva, { foreignKey: 'espacoId', as: 'reservas' });
+db.Reserva.belongsTo(db.Espaco, { foreignKey: 'espacoId', as: 'espaco' });
+
+// Relação N:N - Espaços e Amenities através da tabela EspacoAmenity
+db.Espaco.belongsToMany(db.Amenity, { through: db.EspacoAmenity, foreignKey: 'espacoId', as: 'amenities' });
+db.Amenity.belongsToMany(db.Espaco, { through: db.EspacoAmenity, foreignKey: 'amenityId', as: 'espacos' });
+
+
+// Função para conectar e sincronizar os modelos com o banco de dados
 const connectAndSync = async () => {
     try {
         await sequelize.authenticate();
-
-        // Sincroniza os modelos com o banco de dados.
-        // CUIDADO: `force: true` apaga e recria as tabelas. Use com cautela.
-        // Em desenvolvimento, pode ser útil. Em produção, use migrations.
-        await sequelize.sync({ force: false });
-
+        console.log('✅ Conexão com o PostgreSQL estabelecida com sucesso.');
+        
+        // Sincroniza os modelos. force: false para não apagar os dados existentes.
+        await sequelize.sync({ force: false }); 
+        console.log('✅ Todos os modelos foram sincronizados com sucesso.');
     } catch (error) {
-        console.error('❌ Erro ao conectar ou sincronizar com o PostgreSQL:', error);
-        // Encerra o processo se não conseguir conectar ao banco, para o Docker reiniciar o contêiner.
-        process.exit(1);
+        console.error('❌ Não foi possível conectar à base de dados:', error);
+        // Lança o erro para que a função startApplication possa capturá-lo
+        throw error;
     }
 };
 
-var db = {};
-db.Sequelize = Sequelize;
-db.sequelize = sequelize;
-db.createDatabaseIfNotExists = createDatabaseIfNotExists;
-db.connectAndSync = connectAndSync;
-
-// Import relational models
-db.Usuario = require('../models/relational/usuario.js')(sequelize, Sequelize);
-db.Reserva = require('../models/relational/reserva.js')(sequelize, Sequelize);
-db.Espaco = require('../models/relational/espaco.js')(sequelize, Sequelize);
-db.Amenity = require('../models/relational/amenity.js')(sequelize, Sequelize);
-db.EspacoAmenity = require('../models/relational/espacoAmenity.js')(sequelize, Sequelize);
-
-// Define relationships
-db.Usuario.hasMany(db.Reserva, { foreignKey: 'usuarioId', onDelete: 'NO ACTION' });
-db.Reserva.belongsTo(db.Usuario, { foreignKey: 'usuarioId' });
-
-db.Espaco.hasMany(db.Reserva, { foreignKey: 'espacoId', onDelete: 'NO ACTION' });
-db.Reserva.belongsTo(db.Espaco, { foreignKey: 'espacoId' });
-
-// Many-to-many relationship between Espaco and Amenity
-db.Espaco.belongsToMany(db.Amenity, { 
-    through: db.EspacoAmenity, 
-    foreignKey: 'espacoId',
-    otherKey: 'amenityId'
-});
-db.Amenity.belongsToMany(db.Espaco, { 
-    through: db.EspacoAmenity, 
-    foreignKey: 'amenityId',
-    otherKey: 'espacoId'
-});
-
-// Direct associations for EspacoAmenity
-db.EspacoAmenity.belongsTo(db.Espaco, { foreignKey: 'espacoId' });
-db.EspacoAmenity.belongsTo(db.Amenity, { foreignKey: 'amenityId' });
-db.Espaco.hasMany(db.EspacoAmenity, { foreignKey: 'espacoId' });
-db.Amenity.hasMany(db.EspacoAmenity, { foreignKey: 'amenityId' });
-
-module.exports = db;
+// Exporta a instância do sequelize, os modelos e a função de conexão
+module.exports = {
+    ...db,
+    connectAndSync
+};
