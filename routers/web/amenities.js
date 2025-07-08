@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const amenityController = require('../../controllers/web/amenityController');
-const { requireAuth, requireAdminOrGestor } = require('../../middlewares/webAuth');
+const webAuth = require('../../middlewares/webAuth');
 
 // All amenity routes require authentication and admin/gestor privileges
-router.use(requireAuth);
-router.use(requireAdminOrGestor);
+router.use(webAuth.auth);
+router.use(webAuth.manager);
 
 // GET /amenities
 router.get('/', amenityController.index);
