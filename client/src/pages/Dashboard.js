@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
-import axios from 'axios';
+import { reservationsAPI, spacesAPI, amenitiesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
@@ -12,29 +12,38 @@ const Dashboard = () => {
     reservasHoje: 0
   });
 
+  const canManage = isAdminOrGestor();
+
   const fetchStats = useCallback(async () => {
     try {
-      const [reservasRes, espacosRes, amenidadesRes] = await Promise.all([
-        axios.get('/api/reservas'),
-        isAdminOrGestor() ? axios.get('/api/espacos') : Promise.resolve({ data: [] }),
-        isAdminOrGestor() ? axios.get('/api/amenities') : Promise.resolve({ data: [] })
-      ]);
+      const apiCalls = [
+        reservationsAPI.getAll(),
+        canManage ? spacesAPI.getAll() : Promise.resolve({ data: [] }),
+        canManage ? amenitiesAPI.getAll() : Promise.resolve({ data: [] })
+      ];
+      
+      const [reservasRes, espacosRes, amenidadesRes] = await Promise.all(apiCalls);
+
+      // Defensively check if the response data is an array before using array methods.
+      const reservasData = Array.isArray(reservasRes.data) ? reservasRes.data : [];
+      const espacosData = Array.isArray(espacosRes.data) ? espacosRes.data : [];
+      const amenidadesData = Array.isArray(amenidadesRes.data) ? amenidadesRes.data : [];
 
       const today = new Date().toISOString().split('T')[0];
-      const reservasHoje = reservasRes.data.filter(reserva => 
-        reserva.dataInicio.startsWith(today)
+      const reservasHoje = reservasData.filter(reserva => 
+        reserva.dataInicio && reserva.dataInicio.startsWith(today)
       ).length;
 
       setStats({
-        totalReservas: reservasRes.data.length,
-        totalEspacos: espacosRes.data.length,
-        totalAmenidades: amenidadesRes.data.length,
+        totalReservas: reservasData.length,
+        totalEspacos: espacosData.length,
+        totalAmenidades: amenidadesData.length,
         reservasHoje
       });
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
+      console.error('Erro ao buscar estatísticas:', error.response?.data?.message || error.message);
     }
-  }, [isAdminOrGestor]);
+  }, [canManage]);
 
   useEffect(() => {
     fetchStats();
@@ -43,7 +52,7 @@ const Dashboard = () => {
   return (
     <Container className="mt-4">
       <h1>Dashboard</h1>
-      <p>Bem-vindo, {user?.nome}!</p>
+      <p>Bem-vindo, {user?.nome || 'usuário'}!</p>
       
       <Row>
         <Col md={3}>
@@ -62,7 +71,7 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-        {isAdminOrGestor() && (
+        {canManage && (
           <>
             <Col md={3}>
               <Card className="mb-3">
