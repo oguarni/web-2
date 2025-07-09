@@ -2,18 +2,30 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const bcrypt = require('bcryptjs'); // Adicionado para criptografar senhas
+const bcrypt = require('bcryptjs');
+const cors = require('cors'); // Adicionado
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const webRoutes = require('./routers/web');
 const apiRoutes = require('./routers/api');
 const { errorHandler } = require('./middlewares/errorHandler');
-const db = require('./config/db_sequelize'); // Modificado para importar todo o objeto db
+const db = require('./config/db_sequelize');
 require('./config/db_mongoose');
 
-const app = express();
+const app = express(); // Apenas uma declaração
 
-// Configuração da sessão
+// --- Middlewares Principais ---
+
+// 1. CORS: Deve vir antes das rotas.
+app.use(cors({
+    origin: process.env.CORS_ORIGIN
+}));
+
+// 2. Parsers para JSON e URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 3. Configuração da sessão
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret_key',
     resave: false,
@@ -21,19 +33,19 @@ app.use(session({
     cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
-// Middlewares para parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// --- Configuração de Views e Arquivos Estáticos ---
 
-// Configuração do View Engine (Handlebars)
+// View Engine (Handlebars)
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
-// Servir arquivos estáticos (CSS, imagens) para a aplicação MVC a partir do diretório 'public'
-app.use(express.static(path.join(__dirname, 'public')));
+// Servir arquivos estáticos (CSS, imagens) para a aplicação MVC
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Servir os arquivos estáticos da build do React
 app.use(express.static(path.join(__dirname, 'client/build')));
+
+// --- Rotas ---
 
 // Rotas da API
 app.use('/api', apiRoutes);
@@ -44,8 +56,7 @@ app.use('/web', webRoutes);
 // Rota para a documentação da API (Swagger)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Rota Catch-all: Para qualquer outra requisição que não seja para a API ou MVC,
-// sirva o arquivo principal da aplicação React.
+// Rota Catch-all para o React
 app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/web')) {
         return next();
@@ -53,12 +64,13 @@ app.get('*', (req, res, next) => {
     res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
-// Middleware de tratamento de erros (deve ser o último)
+// --- Tratamento de Erros ---
 app.use(errorHandler);
+
+// --- Inicialização do Servidor ---
 
 const PORT = process.env.PORT || 8081;
 
-// --- Lógica para criar usuários padrão ---
 const createDefaultUsers = async () => {
     try {
         const adminExists = await db.Usuario.findOne({ where: { login: 'admin' } });
@@ -86,10 +98,9 @@ const createDefaultUsers = async () => {
     }
 };
 
-// Sincroniza o Sequelize, cria os usuários e inicia o servidor
 db.sequelize.sync().then(async () => {
     console.log('Banco de dados sincronizado.');
-    await createDefaultUsers(); // Garante que os usuários existam
+    await createDefaultUsers();
     app.listen(PORT, () => {
         console.log(`Servidor unificado rodando na porta ${PORT}`);
         console.log(`--> Aplicação React (SPA) disponível em http://localhost:${PORT}`);

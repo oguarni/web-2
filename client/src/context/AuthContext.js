@@ -1,88 +1,92 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+// O seu api.js exporta vários objetos, vamos importar apenas o que precisamos.
 import { authAPI } from '../services/api';
 
+// 1. CRIAÇÃO DO CONTEXTO
 const AuthContext = createContext();
 
+// 2. HOOK PARA FACILITAR O USO
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 };
 
+// 3. O PROVEDOR COM TODA A LÓGICA
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [token, setToken] = useState(localStorage.getItem('token'));
 
-  // ✅ CORREÇÃO APLICADA AQUI
-  const checkToken = useCallback(async () => {
-    try {
-      // Tenta verificar o token
-      const response = await authAPI.verifyToken();
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      // Se der QUALQUER erro (de rede ou da API), simplesmente desloga.
-      // Isso impede que a aplicação quebre.
-      console.error("Falha na verificação do token:", error.message);
-      logout();
-    } finally {
-      // Garante que o loading sempre termine.
-      setLoading(false);
-    }
-  }, []); // A dependência vazia previne loops infinitos
+  // ✅ CORREÇÃO: A função de logout agora é envolvida em useCallback.
+  // Isso garante que ela não seja recriada a cada renderização, evitando loops.
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAuthenticated(false);
+  }, []);
 
-  useEffect(() => {
+  // ✅ CORREÇÃO: Adicionada a dependência 'logout' ao useCallback.
+  // Isso garante que 'checkAuthStatus' sempre use a versão mais recente da função 'logout'.
+  const checkAuthStatus = useCallback(async () => {
+    const token = localStorage.getItem('token');
     if (token) {
-      authAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      checkToken();
-    } else {
-      setLoading(false);
+      try {
+        const response = await authAPI.verifyToken();
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Sessão inválida ou expirada. Fazendo logout.");
+        logout(); // Agora usa a função 'logout' estável
+      }
     }
-  }, [token, checkToken]);
+    setLoading(false);
+  }, [logout]); // Dependência adicionada
 
-  const login = async (loginData) => {
+  // Executa a verificação de status quando o componente é montado
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
+  // Função de Login
+  const login = async (credentials) => {
     try {
-      const response = await authAPI.login(loginData);
-      const { token: newToken, user: userData } = response.data;
-      
-      localStorage.setItem('token', newToken);
-      setToken(newToken); // Atualiza o token, o que vai disparar o useEffect
+      const response = await authAPI.login(credentials);
+      const { token, user: userData } = response.data;
+
+      localStorage.setItem('token', token);
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       return { success: true };
     } catch (error) {
-      // Retorna um objeto de erro, NUNCA lança o erro
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Login falhou. Verifique suas credenciais.' 
+      console.error("Erro no login:", error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Login falhou. Verifique suas credenciais.'
       };
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    delete authAPI.defaults.headers.common['Authorization'];
-  };
+  // Funções de verificação de permissão
+  const isAdmin = () => user?.tipo === 1;
+  const isAdminOrGestor = () => user?.tipo === 1 || user?.tipo === 3;
 
+  // Valor a ser partilhado com toda a aplicação
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
     logout,
+    isAdmin,
+    isAdminOrGestor,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {/* Mostra os filhos apenas quando o loading inicial terminar */}
       {!loading && children}
     </AuthContext.Provider>
   );
