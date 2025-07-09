@@ -11,8 +11,8 @@ module.exports = {
         const reservas = await db.Reserva.findAll({
             where,
             include: [
-                { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
-                { model: db.Espaco, attributes: ['id', 'nome', 'localizacao'] }
+                { model: db.Usuario, as: 'usuario', attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, as: 'espaco', attributes: ['id', 'nome', 'localizacao'] }
             ],
             order: [['dataInicio', 'DESC']]
         });
@@ -29,8 +29,8 @@ module.exports = {
         
         const reserva = await db.Reserva.findByPk(id, {
             include: [
-                { model: db.Usuario, attributes: ['id', 'nome', 'login'] },
-                { model: db.Espaco, attributes: ['id', 'nome', 'localizacao', 'capacidade'] }
+                { model: db.Usuario, as: 'usuario', attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, as: 'espaco', attributes: ['id', 'nome', 'localizacao', 'capacidade'] }
             ]
         });
         

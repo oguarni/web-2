@@ -25,14 +25,18 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    // 1. Chame a função login e guarde o objeto de resultado
     const result = await login(formData);
-    
+
+    // 2. Verifique o resultado retornado pelo AuthContext
     if (result.success) {
+      // 3. Só navegue se o resultado for sucesso
       navigate('/dashboard');
     } else {
+      // 4. Se não, mostre o erro que veio do AuthContext
       setError(result.error);
     }
-    
+
     setLoading(false);
   };
 

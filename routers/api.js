@@ -23,6 +23,9 @@ const espacoAmenityController = require('../controllers/api/espacoAmenityControl
 // Auth routes
 router.post('/auth/login', validateAuth.login, authController.login);
 router.get('/auth/me', validateToken, authController.me);
+router.get('/auth/verify', validateToken, (req, res) => {
+  res.json({ user: req.user });
+});
 
 // Protected routes - require valid token
 router.use(validateToken);

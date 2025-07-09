@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node test_requirements.js",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "docker:rebuild": "docker-compose down -v && docker-compose up --build",
+    "docker:logs": "docker-compose logs -f app"
   },
   "keywords": [],
   "author": "Gabriel Felipe Guarnieri",

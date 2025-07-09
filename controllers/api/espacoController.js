@@ -13,7 +13,7 @@ module.exports = {
             
             const espacos = await db.Espaco.findAll({
                 where,
-                include: [db.Amenity], // Include associated amenities
+                include: [{ model: db.Amenity, as: 'amenities' }], // Include associated amenities
                 order: [['nome', 'ASC']]
             });
             
@@ -44,9 +44,10 @@ module.exports = {
                         ]
                     },
                     { 
-                        model: db.Amenity, // Include associated amenities
-                        through: { attributes: [] } // Don't show join table attributes
-                    } 
+                        model: db.Amenity,
+                        as: 'amenities',
+                        through: { attributes: [] }
+                    }
                 ]
             });
             

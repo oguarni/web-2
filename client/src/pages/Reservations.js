@@ -27,7 +27,7 @@ const Reservations = () => {
   const fetchReservations = async () => {
     try {
       const response = await reservationsAPI.getAll();
-      setReservations(response.data);
+      setReservations(response.data.data || []);
     } catch (error) {
       setError('Erro ao carregar reservas');
     }
@@ -36,7 +36,8 @@ const Reservations = () => {
   const fetchSpaces = async () => {
     try {
       const response = await spacesAPI.getAll();
-      setSpaces(response.data.filter(space => space.ativo));
+      console.log('Spaces response:', response.data); // Debug
+      setSpaces(response.data.data?.filter(space => space.ativo) || []);
     } catch (error) {
       console.error('Erro ao carregar espaços');
     }
@@ -77,7 +78,7 @@ const Reservations = () => {
       dataInicio: new Date(reservation.dataInicio).toISOString().slice(0, 16),
       dataFim: new Date(reservation.dataFim).toISOString().slice(0, 16),
       descricao: reservation.descricao || '',
-      espacoId: reservation.espacoId.toString()
+      espacoId: reservation.espacoId?.toString() || reservation.espaco?.id?.toString()
     });
     setShowModal(true);
   };
@@ -158,7 +159,7 @@ const Reservations = () => {
                   <td>{new Date(reservation.dataInicio).toLocaleString('pt-BR')}</td>
                   <td>{new Date(reservation.dataFim).toLocaleString('pt-BR')}</td>
                   <td>{getStatusBadge(reservation.status)}</td>
-                  {isAdminOrGestor() && <td>{reservation.Usuario?.nome}</td>}
+                  {isAdminOrGestor() && <td>{reservation.usuario?.nome}</td>}
                   <td>
                     {canEditReservation(reservation) && (
                       <>
