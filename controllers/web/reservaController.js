@@ -65,16 +65,6 @@ module.exports = {
             const startDate = new Date(dataInicio);
             const endDate = new Date(dataFim);
             
-            if (startDate >= endDate) {
-                req.flash('error', 'Data de início deve ser anterior à data de fim');
-                return res.redirect('/reservas/new');
-            }
-
-            if (startDate < new Date()) {
-                req.flash('error', 'Data de início não pode ser no passado');
-                return res.redirect('/reservas/new');
-            }
-
             // Check for conflicts
             const conflictingReserva = await db.Reserva.findOne({
                 where: {
@@ -216,16 +206,6 @@ module.exports = {
             const startDate = new Date(dataInicio);
             const endDate = new Date(dataFim);
             
-            if (startDate >= endDate) {
-                req.flash('error', 'Data de início deve ser anterior à data de fim');
-                return res.redirect(`/reservas/${id}/edit`);
-            }
-
-            if (startDate < new Date()) {
-                req.flash('error', 'Data de início não pode ser no passado');
-                return res.redirect(`/reservas/${id}/edit`);
-            }
-
             // Check for conflicts (exclude current reservation)
             const conflictingReserva = await db.Reserva.findOne({
                 where: {

@@ -115,19 +115,39 @@ const reservationSchemas = {
         descricao: Joi.string().max(500).allow(''),
         dataInicio: patterns.dateTime,
         dataFim: patterns.dateTime,
+        espacoId: patterns.objectId,
         status: patterns.status
     }).min(1).custom((value, helpers) => {
         const { dataInicio, dataFim } = value;
         if (dataInicio && dataFim) {
             const start = new Date(dataInicio);
             const end = new Date(dataFim);
+            const now = new Date();
+            
             if (start >= end) {
                 return helpers.error('custom.dateRange');
+            }
+            if (start < now) {
+                return helpers.error('custom.pastDate');
+            }
+            // Check if reservation is more than 1 year in advance
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+            if (start > oneYearFromNow) {
+                return helpers.error('custom.tooFarInFuture');
+            }
+            // Check if reservation is too long (max 24 hours)
+            const maxDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            if (end - start > maxDuration) {
+                return helpers.error('custom.tooLong');
             }
         }
         return value;
     }).messages({
-        'custom.dateRange': 'End date must be after start date'
+        'custom.dateRange': 'End date must be after start date',
+        'custom.pastDate': 'Start date cannot be in the past',
+        'custom.tooFarInFuture': 'Reservations cannot be made more than 1 year in advance',
+        'custom.tooLong': 'Reservation cannot exceed 24 hours'
     }),
     updateStatus: Joi.object({
         status: patterns.status.required()

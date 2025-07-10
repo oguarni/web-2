@@ -31,6 +31,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(sanitizeInput);
 
 // 4. Rate limiting middleware
+// Strategy: Multi-tier rate limiting for enhanced security against brute force attacks and API abuse
+
+// Strict rate limiter for authentication endpoints
+// Purpose: Prevent brute force login attacks by limiting to 5 attempts per 15 minutes
+// Only failed login attempts count towards the limit (skipSuccessfulRequests: true)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // 5 attempts per window
@@ -49,6 +54,9 @@ const authLimiter = rateLimit({
     }
 });
 
+// General API rate limiter
+// Purpose: Prevent API abuse and ensure fair usage across all endpoints
+// Allows higher volume (100 requests per 15 minutes) for legitimate application usage
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // 100 requests per window

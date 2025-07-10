@@ -117,7 +117,7 @@ const Reservations = () => {
       const response = await spacesAPI.getAll();
       setSpaces(response.data.data?.filter(space => space.ativo) || []);
     } catch (error) {
-      console.error('Erro ao carregar espaços');
+      setError('Erro ao carregar espaços');
     }
   };
 

@@ -27,6 +27,11 @@ router.get('/auth/verify', validateToken, (req, res) => {
   res.json({ user: req.user });
 });
 
+// Health check endpoint - publicly accessible for container monitoring
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Protected routes - require valid token
 router.use(validateToken);
 
