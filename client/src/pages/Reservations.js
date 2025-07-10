@@ -124,7 +124,7 @@ const Reservations = () => {
       setReservations(response.data.data || []);
       setError('');
     } catch (error) {
-      setError('Error loading reservations');
+      setError('Erro ao carregar reservas');
     }
   };
 
@@ -149,20 +149,20 @@ const Reservations = () => {
     const now = new Date();
 
     if (startDate <= now) {
-      setError('Start date must be in the future.');
+      setError('A data de início deve ser no futuro.');
       setSubmitting(false);
       return;
     }
 
     if (endDate <= startDate) {
-      setError('End date must be after start date.');
+      setError('A data de fim deve ser posterior à data de início.');
       setSubmitting(false);
       return;
     }
 
     const maxDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     if (endDate - startDate > maxDuration) {
-      setError('Reservation cannot exceed 24 hours.');
+      setError('A reserva não pode exceder 24 horas.');
       setSubmitting(false);
       return;
     }
@@ -170,7 +170,7 @@ const Reservations = () => {
     const oneYearFromNow = new Date();
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
     if (startDate > oneYearFromNow) {
-      setError('Reservations cannot be made more than 1 year in advance.');
+      setError('Reservas não podem ser feitas com mais de 1 ano de antecedência.');
       setSubmitting(false);
       return;
     }
@@ -183,10 +183,10 @@ const Reservations = () => {
 
       if (editingReservation) {
         await reservationsAPI.update(editingReservation.id, submitData);
-        setSuccess('Reservation updated successfully!');
+        setSuccess('Reserva atualizada com sucesso!');
       } else {
         await reservationsAPI.create(submitData);
-        setSuccess('Reservation created successfully!');
+        setSuccess('Reserva criada com sucesso!');
       }
       
       setShowModal(false);
@@ -194,7 +194,7 @@ const Reservations = () => {
       setEditingReservation(null);
       fetchReservations();
     } catch (error) {
-      setError(error.response?.data?.message || 'Error saving reservation');
+      setError(error.response?.data?.message || 'Erro ao salvar reserva');
     } finally {
       setSubmitting(false);
     }
@@ -274,7 +274,7 @@ const Reservations = () => {
     <Container className="mt-4">
       <Row className="mb-4">
         <Col>
-          <h1>My Reservations</h1>
+          <h1>Minhas Reservas</h1>
         </Col>
         <Col xs="auto">
           <Button variant="primary" onClick={() => {
@@ -288,7 +288,7 @@ const Reservations = () => {
             });
             setShowModal(true);
           }}>
-            New Reservation
+            Nova Reserva
           </Button>
         </Col>
       </Row>
@@ -301,7 +301,7 @@ const Reservations = () => {
           <Spinner animation="border" role="status" variant="primary">
             <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-2">Loading reservations...</p>
+          <p className="mt-2">Carregando reservas...</p>
         </div>
       ) : (
         <Card>
@@ -310,13 +310,13 @@ const Reservations = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Title</th>
-                <th>Space</th>
-                <th>Start Date/Time</th>
-                <th>End Date/Time</th>
+                <th>Título</th>
+                <th>Espaço</th>
+                <th>Data/Hora Início</th>
+                <th>Data/Hora Fim</th>
                 <th>Status</th>
-                {isAdmin() && <th>User</th>}
-                <th>Actions</th>
+                {isAdmin() && <th>Usuário</th>}
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -352,7 +352,7 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleApprove(reservation.id)}
                         >
-                          Approve
+                          Aprovar
                         </Button>
                         <Button
                           variant="danger"
@@ -360,7 +360,7 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleReject(reservation.id)}
                         >
-                          Reject
+                          Rejeitar
                         </Button>
                       </>
                     )}
@@ -372,27 +372,29 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleEdit(reservation)}
                         >
-                          Edit
+                          Editar
                         </Button>
                         <Button
                           variant="outline-danger"
                           size="sm"
                           onClick={() => handleDelete(reservation.id)}
                         >
-                          Delete
+                          Excluir
                         </Button>
                       </>
                     )}
                   </td>
                 </tr>
               ))}
+              {filteredReservations.length === 0 && (
+                <tr>
+                  <td colSpan={isAdmin() ? "7" : "6"} className="text-center py-4">
+                    Nenhuma reserva encontrada.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Table>
-          {filteredReservations.length === 0 && (
-            <div className="text-center py-4">
-              <p>No reservations found.</p>
-            </div>
-          )}
         </Card.Body>
         </Card>
       )}
@@ -401,7 +403,7 @@ const Reservations = () => {
       <Modal show={showModal} onHide={handleCloseModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingReservation ? 'Edit Reservation' : 'New Reservation'}
+            {editingReservation ? 'Editar Reserva' : 'Nova Reserva'}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -410,7 +412,7 @@ const Reservations = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Title *</Form.Label>
+                  <Form.Label>Título *</Form.Label>
                   <Form.Control
                     type="text"
                     value={formData.titulo}
@@ -421,13 +423,13 @@ const Reservations = () => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Space *</Form.Label>
+                  <Form.Label>Espaço *</Form.Label>
                   <Form.Select
                     value={formData.espacoId}
                     onChange={(e) => setFormData({...formData, espacoId: e.target.value})}
                     required
                   >
-                    <option value="">Select a space</option>
+                    <option value="">Selecione um espaço</option>
                     {spaces.map(space => (
                       <option key={space.id} value={space.id}>
                         {space.nome} - {space.localizacao}
@@ -441,7 +443,7 @@ const Reservations = () => {
             <Row>
               <Col md={6}>
                 <DateTimeInput
-                  label="Start Date/Time"
+                  label="Data/Hora de Início"
                   value={formData.dataInicio}
                   onChange={(value) => setFormData({...formData, dataInicio: value})}
                   required={true}
@@ -449,7 +451,7 @@ const Reservations = () => {
               </Col>
               <Col md={6}>
                 <DateTimeInput
-                  label="End Date/Time"
+                  label="Data/Hora de Fim"
                   value={formData.dataFim}
                   onChange={(value) => setFormData({...formData, dataFim: value})}
                   required={true}
@@ -458,28 +460,28 @@ const Reservations = () => {
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>Descrição</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 value={formData.descricao}
                 onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                placeholder="Optional description for the reservation"
+                placeholder="Descrição opcional para a reserva"
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end">
               <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={submitting}>
-                Cancel
+                Cancelar
               </Button>
               <Button variant="primary" type="submit" disabled={submitting}>
                 {submitting ? (
                   <>
                     <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
-                    {editingReservation ? 'Updating...' : 'Creating...'}
+                    {editingReservation ? 'Atualizando...' : 'Criando...'}
                   </>
                 ) : (
-                  editingReservation ? 'Update' : 'Create'
+                  editingReservation ? 'Atualizar' : 'Criar'
                 )}
               </Button>
             </div>

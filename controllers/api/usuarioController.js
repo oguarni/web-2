@@ -1,5 +1,5 @@
 const db = require('../../config/db_sequelize');
-const { asyncHandler, NotFoundError, ConflictError, ValidationError } = require('../../middlewares/errorHandler');
+const { asyncHandler, NotFoundError, ConflictError, ValidationError, ForbiddenError } = require('../../middlewares/errorHandler');
 
 module.exports = {
     // GET /api/usuarios
@@ -80,6 +80,11 @@ module.exports = {
             }
         }
         
+        // Prevent admin from changing their own role
+        if (parseInt(id) === req.user.id && req.user.tipo === 1 && tipo !== undefined && tipo !== 1) {
+            throw new ForbiddenError('Admins cannot revoke their own privileges or delete their own account.');
+        }
+        
         await usuario.update({
             nome: nome || usuario.nome,
             login: login || usuario.login,
@@ -109,7 +114,7 @@ module.exports = {
         
         // Prevent self-deletion
         if (parseInt(id) === req.user.id) {
-            throw new ValidationError('Cannot delete your own account');
+            throw new ForbiddenError('Admins cannot revoke their own privileges or delete their own account.');
         }
         
         // Check for associated reservations
@@ -118,8 +123,8 @@ module.exports = {
         });
         
         if (reservasCount > 0) {
-            throw new ValidationError(
-                `Cannot delete user: User has ${reservasCount} associated reservation(s). Please remove or reassign reservations before deleting the user.`
+            throw new ConflictError(
+                "Cannot delete user. Please reassign or delete their active reservations first."
             );
         }
         

@@ -47,7 +47,6 @@ const Dashboard = () => {
         reservasHoje
       });
     } catch (error) {
-      console.error('Error fetching statistics:', error.response?.data?.message || error.message);
       setError('Failed to load dashboard statistics. Please try again.');
     }
   }, [canManage]);
@@ -65,7 +64,6 @@ const Dashboard = () => {
       
       setUpcomingReservations(upcoming);
     } catch (error) {
-      console.error('Error fetching upcoming reservations:', error.response?.data?.message || error.message);
       setError('Failed to load upcoming reservations.');
     }
   }, []);

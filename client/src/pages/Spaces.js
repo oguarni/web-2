@@ -151,12 +151,12 @@ const Spaces = () => {
     const now = new Date();
 
     if (startDate <= now) {
-      setError('Start date must be in the future.');
+      setError('A data de início deve ser no futuro.');
       return;
     }
 
     if (endDate <= startDate) {
-      setError('End date must be after start date.');
+      setError('A data de fim deve ser posterior à data de início.');
       return;
     }
 
@@ -167,12 +167,12 @@ const Spaces = () => {
       };
 
       await reservationsAPI.create(submitData);
-      setSuccess('Reservation created successfully!');
+      setSuccess('Reserva criada com sucesso!');
       setShowReservationModal(false);
       setReservationData({ titulo: '', dataInicio: '', dataFim: '', descricao: '' });
       setSelectedSpace(null);
     } catch (error) {
-      setError(error.response?.data?.message || 'Error creating reservation');
+      setError(error.response?.data?.message || 'Erro ao criar reserva');
     }
   };
 
@@ -187,12 +187,12 @@ const Spaces = () => {
     <Container className="mt-4">
       <Row className="mb-4">
         <Col>
-          <h1>Spaces</h1>
+          <h1>Espaços</h1>
         </Col>
         {isAdmin() && (
           <Col xs="auto">
             <Button variant="primary" onClick={() => setShowModal(true)}>
-              New Space
+              Novo Espaço
             </Button>
           </Col>
         )}
@@ -206,7 +206,7 @@ const Spaces = () => {
           <Spinner animation="border" role="status" variant="primary">
             <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-2">Loading spaces...</p>
+          <p className="mt-2">Carregando espaços...</p>
         </div>
       ) : (
         isAdmin() ? (
@@ -217,11 +217,11 @@ const Spaces = () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Name</th>
-                  <th>Location</th>
-                  <th>Capacity</th>
+                  <th>Nome</th>
+                  <th>Localização</th>
+                  <th>Capacidade</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -233,7 +233,7 @@ const Spaces = () => {
                     <td>{space.capacidade} people</td>
                     <td>
                       <Badge bg={space.ativo ? 'success' : 'danger'}>
-                        {space.ativo ? 'Active' : 'Inactive'}
+                        {space.ativo ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </td>
                     <td>
@@ -243,25 +243,27 @@ const Spaces = () => {
                         className="me-2"
                         onClick={() => handleEdit(space)}
                       >
-                        Edit
+                        Editar
                       </Button>
                       <Button
                         variant="outline-danger"
                         size="sm"
                         onClick={() => handleDelete(space.id)}
                       >
-                        Delete
+                        Excluir
                       </Button>
                     </td>
                   </tr>
                 ))}
+                {spaces.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="text-center py-4">
+                      Nenhum espaço encontrado.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </Table>
-            {spaces.length === 0 && (
-              <div className="text-center py-4">
-                <p>No spaces found.</p>
-              </div>
-            )}
           </Card.Body>
         </Card>
       ) : (
@@ -273,13 +275,13 @@ const Spaces = () => {
                 <Card.Body className="d-flex flex-column">
                   <Card.Title>{space.nome}</Card.Title>
                   <Card.Text>
-                    <strong>Location:</strong> {space.localizacao}<br />
-                    <strong>Capacity:</strong> {space.capacidade} people<br />
+                    <strong>Localização:</strong> {space.localizacao}<br />
+                    <strong>Capacidade:</strong> {space.capacidade} pessoas<br />
                     {space.descricao && (
-                      <><strong>Description:</strong> {space.descricao}<br /></>
+                      <><strong>Descrição:</strong> {space.descricao}<br /></>
                     )}
                     {space.equipamentos && (
-                      <><strong>Equipment:</strong> {space.equipamentos}</>
+                      <><strong>Equipamentos:</strong> {space.equipamentos}</>
                     )}
                   </Card.Text>
                   <div className="mt-auto">
@@ -288,7 +290,7 @@ const Spaces = () => {
                       className="w-100"
                       onClick={() => handleBookSpace(space)}
                     >
-                      Book This Space
+                      Reservar este Espaço
                     </Button>
                   </div>
                 </Card.Body>
@@ -298,7 +300,7 @@ const Spaces = () => {
           {spaces.filter(space => space.ativo).length === 0 && (
             <Col>
               <div className="text-center py-4">
-                <p>No active spaces found.</p>
+                <p>Nenhum espaço ativo encontrado.</p>
               </div>
             </Col>
           )}
@@ -311,7 +313,7 @@ const Spaces = () => {
         <Modal show={showModal} onHide={handleCloseModal} size="lg">
           <Modal.Header closeButton>
             <Modal.Title>
-              {editingSpace ? 'Edit Space' : 'New Space'}
+              {editingSpace ? 'Editar Espaço' : 'Novo Espaço'}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -320,7 +322,7 @@ const Spaces = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Name *</Form.Label>
+                    <Form.Label>Nome *</Form.Label>
                     <Form.Control
                       type="text"
                       value={formData.nome}
@@ -331,7 +333,7 @@ const Spaces = () => {
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Location *</Form.Label>
+                    <Form.Label>Localização *</Form.Label>
                     <Form.Control
                       type="text"
                       value={formData.localizacao}
@@ -345,7 +347,7 @@ const Spaces = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Capacity *</Form.Label>
+                    <Form.Label>Capacidade *</Form.Label>
                     <Form.Control
                       type="number"
                       min="1"
@@ -362,15 +364,15 @@ const Spaces = () => {
                       value={formData.ativo}
                       onChange={(e) => setFormData({...formData, ativo: e.target.value === 'true'})}
                     >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">Ativo</option>
+                      <option value="false">Inativo</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>
               </Row>
 
               <Form.Group className="mb-3">
-                <Form.Label>Description</Form.Label>
+                <Form.Label>Descrição</Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={3}
@@ -380,28 +382,28 @@ const Spaces = () => {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label>Equipment</Form.Label>
+                <Form.Label>Equipamentos</Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={2}
                   value={formData.equipamentos}
                   onChange={(e) => setFormData({...formData, equipamentos: e.target.value})}
-                  placeholder="List available equipment"
+                  placeholder="Liste os equipamentos disponíveis"
                 />
               </Form.Group>
 
               <div className="d-flex justify-content-end">
                 <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={submitting}>
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button variant="primary" type="submit" disabled={submitting}>
                   {submitting ? (
                     <>
                       <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
-                      {editingSpace ? 'Updating...' : 'Creating...'}
+                      {editingSpace ? 'Atualizando...' : 'Criando...'}
                     </>
                   ) : (
-                    editingSpace ? 'Update' : 'Create'
+                    editingSpace ? 'Atualizar' : 'Criar'
                   )}
                 </Button>
               </div>
@@ -414,19 +416,19 @@ const Spaces = () => {
       <Modal show={showReservationModal} onHide={handleCloseReservationModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            Book {selectedSpace?.nome}
+            Reservar {selectedSpace?.nome}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           <div className="mb-3">
-            <strong>Space:</strong> {selectedSpace?.nome}<br />
-            <strong>Location:</strong> {selectedSpace?.localizacao}<br />
-            <strong>Capacity:</strong> {selectedSpace?.capacidade} people
+            <strong>Espaço:</strong> {selectedSpace?.nome}<br />
+            <strong>Localização:</strong> {selectedSpace?.localizacao}<br />
+            <strong>Capacidade:</strong> {selectedSpace?.capacidade} pessoas
           </div>
           <Form onSubmit={handleReservationSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Title *</Form.Label>
+              <Form.Label>Título *</Form.Label>
               <Form.Control
                 type="text"
                 value={reservationData.titulo}
@@ -438,7 +440,7 @@ const Spaces = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Start Date/Time *</Form.Label>
+                  <Form.Label>Data/Hora de Início *</Form.Label>
                   <Form.Control
                     type="datetime-local"
                     value={reservationData.dataInicio}
@@ -449,7 +451,7 @@ const Spaces = () => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>End Date/Time *</Form.Label>
+                  <Form.Label>Data/Hora de Fim *</Form.Label>
                   <Form.Control
                     type="datetime-local"
                     value={reservationData.dataFim}
@@ -461,28 +463,28 @@ const Spaces = () => {
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>Descrição</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 value={reservationData.descricao}
                 onChange={(e) => setReservationData({...reservationData, descricao: e.target.value})}
-                placeholder="Optional description for your reservation"
+                placeholder="Descrição opcional para sua reserva"
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end">
               <Button variant="secondary" className="me-2" onClick={handleCloseReservationModal} disabled={submitting}>
-                Cancel
+                Cancelar
               </Button>
               <Button variant="primary" type="submit" disabled={submitting}>
                 {submitting ? (
                   <>
                     <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
-                    Creating...
+                    Criando...
                   </>
                 ) : (
-                  'Create Reservation'
+                  'Criar Reserva'
                 )}
               </Button>
             </div>

@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }) => {
         setUser(response.data.user);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error("Sessão inválida ou expirada.");
         logout();
       }
     }

@@ -48,7 +48,6 @@ const Amenities = () => {
       setError('');
     } catch (err) {
       setError('Erro ao carregar amenidades');
-      console.error(err);
     } finally {
       setLoading(false);
     }

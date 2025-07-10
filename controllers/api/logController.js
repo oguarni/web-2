@@ -5,10 +5,8 @@ const { asyncHandler, NotFoundError, ValidationError } = require('../../middlewa
 
 // Connect to MongoDB if not already connected
 if (mongoose.connection.readyState === 0) {
-    connectDB().then(() => {
-        console.log('MongoDB connected for logs');
-    }).catch((err) => {
-        console.error('MongoDB connection error:', err);
+    connectDB().catch((err) => {
+        // MongoDB connection error handled by connection logic
     });
 }
 
