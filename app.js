@@ -27,6 +27,18 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// JSON parsing error handler
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid JSON format',
+            code: 'INVALID_JSON'
+        });
+    }
+    next(err);
+});
+
 // 3. Input sanitization for XSS protection
 app.use(sanitizeInput);
 

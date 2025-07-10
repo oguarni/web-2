@@ -157,10 +157,27 @@ const reservationSchemas = {
 // Log schemas
 const logSchemas = {
     create: Joi.object({
-        usuarioId: patterns.objectId.required(),
-        acao: Joi.string().min(1).max(100).trim().required(),
-        ip: Joi.string().ip().required(),
+        usuarioId: patterns.objectId.optional(),
+        userId: patterns.objectId.optional(),
+        acao: Joi.string().min(1).max(100).trim().optional(),
+        action: Joi.string().min(1).max(100).trim().optional(),
+        level: Joi.string().min(1).max(100).trim().optional(),
+        message: Joi.string().min(1).max(500).trim().optional(),
+        ip: Joi.string().ip().optional(),
         detalhes: Joi.object().optional()
+    }).custom((value, helpers) => {
+        // At least one user ID field is required
+        if (!value.usuarioId && !value.userId) {
+            return helpers.error('custom.userIdRequired');
+        }
+        // At least one action field is required
+        if (!value.acao && !value.action && !value.level && !value.message) {
+            return helpers.error('custom.actionRequired');
+        }
+        return value;
+    }).messages({
+        'custom.userIdRequired': 'Either usuarioId or userId is required',
+        'custom.actionRequired': 'Either acao, action, level, or message is required'
     }),
     query: Joi.object({
         page: Joi.number().integer().min(1).default(1),

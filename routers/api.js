@@ -70,10 +70,10 @@ router.post('/espacos/:espacoId/amenities', checkRole(['admin', 'manager']), esp
 router.delete('/espacos/:espacoId/amenities/:amenityId', checkRole(['admin', 'manager']), espacoAmenityController.removeAmenityFromSpace);
 
 // Log routes (Admin only)
+router.get('/logs/stats', requireAdmin, validateLog.query, logController.getStats);
 router.get('/logs', requireAdmin, validateLog.query, logController.index);
 router.get('/logs/:id', requireAdmin, validateLog.idParam, logController.show);
 router.post('/logs', requireAdmin, validateLog.create, logController.create);
-router.get('/logs/stats', requireAdmin, validateLog.query, logController.getStats);
 router.delete('/logs/cleanup', requireAdmin, validateLog.cleanup, logController.cleanup);
 
 module.exports = router;

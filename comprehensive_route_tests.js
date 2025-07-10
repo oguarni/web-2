@@ -280,8 +280,9 @@ async function testSpaceManagement() {
 
     // Test create space (admin)
     await runTest('Create Space (Admin)', async () => {
+        const uniqueName = `Test Space ${Date.now()}`;
         const response = await makeRequest('POST', '/espacos', {
-            nome: 'Test Space',
+            nome: uniqueName,
             descricao: 'Test Description',
             capacidade: 50,
             localizacao: 'Test Location',
@@ -455,8 +456,8 @@ async function testReservationManagement() {
 
     // Test create reservation with invalid space
     await runTest('Create Reservation (Invalid Space)', async () => {
-        const startDate = new Date();
-        const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+        const startDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+        const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
         
         const response = await makeRequest('POST', '/reservas', {
             titulo: 'Invalid Space Reservation',
@@ -580,11 +581,12 @@ async function testLogManagement() {
 
     // Test create log (admin)
     await runTest('Create Log (Admin)', async () => {
+        const uniqueTimestamp = Date.now();
         const response = await makeRequest('POST', '/logs', {
             level: 'info',
-            message: 'Test log message',
-            userId: testUser?.id,
-            action: 'test_action'
+            message: `Test log message created at ${new Date().toISOString()}`,
+            usuarioId: 1, // Use admin user ID (guaranteed to exist)
+            acao: `test_action_${uniqueTimestamp}`
         }, adminToken);
         if (response.success && response.data.data) {
             return { success: true, message: 'Log created successfully' };
@@ -650,21 +652,53 @@ async function testEdgeCases() {
 
     // Test XSS attempt
     await runTest('XSS Attempt', async () => {
-        const response = await makeRequest('POST', '/usuarios', {
-            nome: '<script>alert("xss")</script>',
-            login: 'xsstest',
+        const maliciousName = 'XSS User <script>alert("xss")</script>';
+        const uniqueLogin = `xsstest${Date.now()}`; // Remove underscore to pass validation
+        
+        // Stage 1: Create user with malicious payload
+        const createResponse = await makeRequest('POST', '/usuarios', {
+            nome: maliciousName,
+            login: uniqueLogin,
             senha: 'password123',
             tipo: 2
         }, adminToken);
-        if (response.success) {
-            // Check if script tags were sanitized
-            const user = response.data.data;
-            if (user.nome.includes('<script>')) {
-                return { success: false, message: 'XSS content should be sanitized' };
-            }
-            return { success: true, message: 'XSS content properly handled' };
+        
+        if (!createResponse.success) {
+            return { success: false, message: `Failed to create user for XSS test: ${createResponse.error?.error || createResponse.error}` };
         }
-        return { success: false, message: 'Failed to test XSS handling' };
+        
+        const createdUserId = createResponse.data.data.id;
+        
+        // Stage 2: Retrieve user and verify sanitization
+        const getResponse = await makeRequest('GET', `/usuarios/${createdUserId}`, null, adminToken);
+        
+        if (!getResponse.success) {
+            return { success: false, message: 'Failed to retrieve user for XSS verification' };
+        }
+        
+        const retrievedUser = getResponse.data.data;
+        
+        // Check that script tags were sanitized (should be escaped or stripped)
+        if (retrievedUser.nome.includes('<script>')) {
+            return { success: false, message: 'XSS content should be sanitized' };
+        }
+        
+        // Check that legitimate content remains and script tags are properly sanitized
+        // The XSS middleware can either escape the tags or strip them completely
+        const expectedEscaped = 'XSS User &lt;script&gt;alert("xss")&lt;/script&gt;';
+        const expectedStripped = 'XSS User';
+        
+        if (retrievedUser.nome === expectedEscaped || 
+            retrievedUser.nome === expectedStripped ||
+            (retrievedUser.nome.includes('XSS User') && !retrievedUser.nome.includes('<script>'))) {
+            // Clean up the test user
+            await makeRequest('DELETE', `/usuarios/${createdUserId}`, null, adminToken);
+            return { success: true, message: 'XSS content properly sanitized while preserving valid content' };
+        }
+        
+        // Clean up the test user
+        await makeRequest('DELETE', `/usuarios/${createdUserId}`, null, adminToken);
+        return { success: false, message: `XSS sanitization failed. Expected escaped or stripped content but got: ${retrievedUser.nome}` };
     });
 }
 
