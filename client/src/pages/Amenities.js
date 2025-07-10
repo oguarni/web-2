@@ -1,46 +1,105 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert } from 'react-bootstrap';
+import { Container, Button, Table, Modal, Form, Alert, Spinner, Row, Col, Card } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { amenitiesAPI } from '../services/api';
 
+/**
+ * Amenities Management Page
+ * Allows administrators to perform full CRUD operations on amenities.
+ */
 const Amenities = () => {
-  const { isAdminOrGestor } = useAuth();
+  // State for amenities data
   const [amenities, setAmenities] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editingAmenity, setEditingAmenity] = useState(null);
   const [formData, setFormData] = useState({
     nome: '',
     descricao: ''
   });
+  const [editingAmenity, setEditingAmenity] = useState(null);
+  
+  // UI states
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  const { isAdminOrGestor } = useAuth();
 
-  useEffect(() => {
-    fetchAmenities();
-  }, []);
-
+  // Clear alerts after 3 seconds
   useEffect(() => {
     if (success) {
-      const timer = setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      const timer = setTimeout(() => setSuccess(''), 3000);
       return () => clearTimeout(timer);
     }
   }, [success]);
 
+  // Fetch amenities on component mount
+  useEffect(() => {
+    fetchAmenities();
+  }, []);
+
   const fetchAmenities = async () => {
+    setLoading(true);
     try {
       const response = await amenitiesAPI.getAll();
       setAmenities(response.data.data);
-    } catch (error) {
+      setError('');
+    } catch (err) {
       setError('Erro ao carregar amenidades');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const clearAlerts = () => {
     setError('');
     setSuccess('');
+  };
+
+  // Modal handlers
+  const handleShowCreateModal = () => {
+    clearAlerts();
+    setFormData({ nome: '', descricao: '' });
+    setEditingAmenity(null);
+    setShowModal(true);
+  };
+
+  const handleShowEditModal = (amenity) => {
+    clearAlerts();
+    setEditingAmenity(amenity);
+    setFormData({
+      nome: amenity.nome,
+      descricao: amenity.descricao || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleShowDeleteModal = (amenity) => {
+    clearAlerts();
+    setEditingAmenity(amenity);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowModal(false);
+    setShowDeleteModal(false);
+    setEditingAmenity(null);
+    setFormData({ nome: '', descricao: '' });
+    setError('');
+  };
+
+  // CRUD operations
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    clearAlerts();
+    
+    if (!formData.nome.trim()) {
+      setError('Nome da amenidade não pode estar vazio.');
+      return;
+    }
 
     try {
       if (editingAmenity) {
@@ -50,44 +109,26 @@ const Amenities = () => {
         await amenitiesAPI.create(formData);
         setSuccess('Amenidade criada com sucesso!');
       }
-      
-      setShowModal(false);
-      setFormData({ nome: '', descricao: '' });
-      setEditingAmenity(null);
+      handleCloseModals();
       fetchAmenities();
-    } catch (error) {
-      setError(error.response?.data?.message || 'Erro ao salvar amenidade');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erro ao salvar amenidade');
     }
   };
 
-  const handleEdit = (amenity) => {
-    setEditingAmenity(amenity);
-    setFormData({
-      nome: amenity.nome,
-      descricao: amenity.descricao || ''
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta amenidade?')) {
-      try {
-        await amenitiesAPI.delete(id);
-        setSuccess('Amenidade excluída com sucesso!');
-        fetchAmenities();
-      } catch (error) {
-        setError('Erro ao excluir amenidade');
-      }
+  const handleDelete = async () => {
+    clearAlerts();
+    try {
+      await amenitiesAPI.delete(editingAmenity.id);
+      setSuccess('Amenidade excluída com sucesso!');
+      handleCloseModals();
+      fetchAmenities();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erro ao excluir amenidade');
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingAmenity(null);
-    setFormData({ nome: '', descricao: '' });
-    setError('');
-  };
-
+  // Access control check
   if (!isAdminOrGestor()) {
     return (
       <Container className="mt-4">
@@ -98,21 +139,35 @@ const Amenities = () => {
     );
   }
 
+  // Loading state
+  if (loading && amenities.length === 0) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Carregando...</span>
+        </Spinner>
+      </Container>
+    );
+  }
+
   return (
     <Container className="mt-4">
-      <Row className="mb-4">
+      <Row className="align-items-center mb-4">
         <Col>
           <h1>Amenidades</h1>
         </Col>
-        <Col xs="auto">
-          <Button variant="primary" onClick={() => setShowModal(true)}>
-            Nova Amenidade
+        <Col className="text-end">
+          <Button variant="primary" onClick={handleShowCreateModal}>
+            <i className="bi bi-plus-lg me-2"></i>Nova Amenidade
           </Button>
         </Col>
       </Row>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {/* Global Success/Error Alerts */}
+      {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
+      {error && !showModal && !showDeleteModal && (
+        <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>
+      )}
 
       <Card>
         <Card.Body>
@@ -126,50 +181,51 @@ const Amenities = () => {
               </tr>
             </thead>
             <tbody>
-              {amenities.map(amenity => (
-                <tr key={amenity.id}>
-                  <td>{amenity.id}</td>
-                  <td>{amenity.nome}</td>
-                  <td>{amenity.descricao || '-'}</td>
-                  <td>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEdit(amenity)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDelete(amenity.id)}
-                    >
-                      Excluir
-                    </Button>
-                  </td>
+              {amenities.length > 0 ? (
+                amenities.map(amenity => (
+                  <tr key={amenity.id}>
+                    <td>{amenity.id}</td>
+                    <td>{amenity.nome}</td>
+                    <td>{amenity.descricao || '-'}</td>
+                    <td>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleShowEditModal(amenity)}
+                      >
+                        <i className="bi bi-pencil-fill"></i> Editar
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleShowDeleteModal(amenity)}
+                      >
+                        <i className="bi bi-trash-fill"></i> Excluir
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center">Nenhuma amenidade encontrada.</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </Table>
-          {amenities.length === 0 && (
-            <div className="text-center py-4">
-              <p>Nenhuma amenidade encontrada.</p>
-            </div>
-          )}
         </Card.Body>
       </Card>
 
-      {/* Modal para criar/editar amenidade */}
-      <Modal show={showModal} onHide={handleCloseModal}>
+      {/* Create/Edit Modal */}
+      <Modal show={showModal} onHide={handleCloseModals} centered>
         <Modal.Header closeButton>
           <Modal.Title>
             {editingAmenity ? 'Editar Amenidade' : 'Nova Amenidade'}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
-          <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit}>
+          <Modal.Body>
+            {error && <Alert variant="danger">{error}</Alert>}
             <Form.Group className="mb-3">
               <Form.Label>Nome *</Form.Label>
               <Form.Control
@@ -188,16 +244,35 @@ const Amenities = () => {
                 onChange={(e) => setFormData({...formData, descricao: e.target.value})}
               />
             </Form.Group>
-            <div className="d-flex justify-content-end">
-              <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit">
-                {editingAmenity ? 'Atualizar' : 'Criar'}
-              </Button>
-            </div>
-          </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseModals}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit">
+              {editingAmenity ? 'Atualizar' : 'Criar'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={handleCloseModals} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Excluir Amenidade</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Tem certeza que deseja excluir a amenidade "<strong>{editingAmenity?.nome}</strong>"?</p>
+          {error && <Alert variant="danger">{error}</Alert>}
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModals}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Excluir
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );

@@ -4,7 +4,10 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { useAuth } from '../context/AuthContext';
 
 const Navigation = () => {
-    const { isAuthenticated, logout, user, isAdmin } = useAuth();
+    const { isAuthenticated, logout, user } = useAuth();
+    
+    // Check if user has admin role
+    const isAdmin = user?.role === 'admin';
 
     return (
         <Navbar bg="dark" variant="dark" expand="lg" className="mb-3">
@@ -24,7 +27,8 @@ const Navigation = () => {
                                 <LinkContainer to="/reservations">
                                     <Nav.Link>My Reservations</Nav.Link>
                                 </LinkContainer>
-                                {isAdmin() && (
+                                {/* Admin-only links using role check */}
+                                {user?.role === 'admin' && (
                                     <>
                                         <LinkContainer to="/users">
                                             <Nav.Link>Users</Nav.Link>

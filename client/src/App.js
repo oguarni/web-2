@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// Componentes
+// Components
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute'; // Add this new component
 import PublicRoute from './components/PublicRoute';
 import Navigation from './components/Navigation';
 
-// Páginas
+// Pages
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -20,7 +21,7 @@ function App() {
       <Router>
         <Navigation />
         <Routes>
-          {/* Rota Pública: Apenas usuários não logados podem ver */}
+          {/* Public Route: Only non-logged users can see */}
           <Route 
             path="/login" 
             element={
@@ -30,20 +31,23 @@ function App() {
             } 
           />
 
-          {/* Layout de Rotas Protegidas */}
+          {/* Protected Routes Layout - Any authenticated user */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/spaces" element={<Spaces />} />
-            <Route path="/amenities" element={<Amenities />} />
             <Route path="/reservations" element={<Reservations />} />
-            {/* Adicione outras rotas protegidas aqui dentro */}
+            
+            {/* Admin-only routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/users" element={<Users />} />
+              <Route path="/spaces" element={<Spaces />} />
+              <Route path="/amenities" element={<Amenities />} />
+            </Route>
           </Route>
           
-          {/* Redirecionamento da rota raiz. Se o usuário acessar "/", ele será levado para o dashboard. */}
+          {/* Root redirect to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
 
-          {/* Rota "catch-all" para páginas não encontradas */}
+          {/* 404 catch-all route */}
           <Route path="*" element={
             <div className="container mt-5 text-center">
               <h2>404 - Página Não Encontrada</h2>
