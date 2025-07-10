@@ -115,7 +115,6 @@ const Reservations = () => {
   const fetchSpaces = async () => {
     try {
       const response = await spacesAPI.getAll();
-      console.log('Spaces response:', response.data); // Debug
       setSpaces(response.data.data?.filter(space => space.ativo) || []);
     } catch (error) {
       console.error('Erro ao carregar espaços');

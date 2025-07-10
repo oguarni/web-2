@@ -259,6 +259,47 @@ const options = {
             }
           }
         },
+        Amenity: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer',
+              description: 'ID único da amenidade'
+            },
+            nome: {
+              type: 'string',
+              description: 'Nome da amenidade'
+            },
+            descricao: {
+              type: 'string',
+              description: 'Descrição da amenidade'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Data de criação'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Data da última atualização'
+            }
+          }
+        },
+        AmenityCreate: {
+          type: 'object',
+          required: ['nome'],
+          properties: {
+            nome: {
+              type: 'string',
+              description: 'Nome da amenidade'
+            },
+            descricao: {
+              type: 'string',
+              description: 'Descrição da amenidade'
+            }
+          }
+        },
         LoginRequest: {
           type: 'object',
           required: ['login', 'senha'],
@@ -329,6 +370,10 @@ const options = {
       {
         name: 'Reservas',
         description: 'Gerenciamento de reservas'
+      },
+      {
+        name: 'Amenities',
+        description: 'Gerenciamento de amenidades'
       },
       {
         name: 'Logs',
