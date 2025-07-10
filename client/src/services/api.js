@@ -1,6 +1,7 @@
+// Complex API service with domain objects and error handling
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -9,7 +10,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add token
+// Request interceptor for auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -23,7 +24,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token expiration
+// Response interceptor for handling 401 errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -37,6 +38,7 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Domain-specific API objects
 // Auth API
 export const authAPI = {
   login: (credentials) => apiClient.post('/auth/login', credentials),

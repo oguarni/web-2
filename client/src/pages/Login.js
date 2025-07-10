@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -22,22 +22,28 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validação simples
+    if (!formData.login || !formData.senha) {
+      setError('Por favor, preencha todos os campos.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
-    // 1. Chame a função login e guarde o objeto de resultado
-    const result = await login(formData);
-
-    // 2. Verifique o resultado retornado pelo AuthContext
-    if (result.success) {
-      // 3. Só navegue se o resultado for sucesso
-      navigate('/');
-    } else {
-      // 4. Se não, mostre o erro que veio do AuthContext
-      setError(result.error);
+    try {
+      const result = await login(formData);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Falha no login. Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -78,6 +84,9 @@ const Login = () => {
                   {loading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </Form>
+              <div className="mt-3 text-center">
+                <Link to="/esqueci-senha">Esqueci minha senha</Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>

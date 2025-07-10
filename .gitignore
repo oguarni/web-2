@@ -6,6 +6,7 @@ jspm_packages/
 build/
 /dist
 /out
+client/build
 
 # Environment variables
 # Should not be versioned for security reasons.
