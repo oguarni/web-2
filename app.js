@@ -4,11 +4,13 @@ const session = require('express-session');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const cors = require('cors'); // Adicionado
+const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const webRoutes = require('./routers/web');
 const apiRoutes = require('./routers/api');
 const { errorHandler } = require('./middlewares/errorHandler');
+const { sanitizeInput } = require('./middlewares/sanitization');
 const db = require('./config/db_sequelize');
 require('./config/db_mongoose');
 
@@ -25,7 +27,52 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 3. Configuração da sessão
+// 3. Input sanitization for XSS protection
+app.use(sanitizeInput);
+
+// 4. Rate limiting middleware
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per window
+    message: {
+        success: false,
+        message: 'Too many login attempts, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful requests
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many login attempts, please try again later.'
+        });
+    }
+});
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per window
+    message: {
+        success: false,
+        message: 'Too many API requests, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many API requests, please try again later.'
+        });
+    }
+});
+
+// Apply strict rate limiting to authentication endpoints
+app.use('/api/auth/login', authLimiter);
+
+// Apply general rate limiting to all API routes
+app.use('/api', apiLimiter);
+
+// 5. Configuração da sessão
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret_key',
     resave: false,

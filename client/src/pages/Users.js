@@ -17,7 +17,7 @@ const Users = () => {
     try {
       const response = await usersAPI.getAll();
       // Defensively check if the response data is an array.
-      const usersData = Array.isArray(response.data) ? response.data : [];
+      const usersData = Array.isArray(response.data?.data) ? response.data.data : [];
       setUsers(usersData);
     } catch (err) {
       setError('Falha ao carregar usuários. ' + (err.response?.data?.message || err.message));

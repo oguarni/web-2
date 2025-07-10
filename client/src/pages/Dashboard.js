@@ -25,9 +25,9 @@ const Dashboard = () => {
       const [reservasRes, espacosRes, amenidadesRes] = await Promise.all(apiCalls);
 
       // Defensively check if the response data is an array before using array methods.
-      const reservasData = Array.isArray(reservasRes.data) ? reservasRes.data : [];
-      const espacosData = Array.isArray(espacosRes.data) ? espacosRes.data : [];
-      const amenidadesData = Array.isArray(amenidadesRes.data) ? amenidadesRes.data : [];
+      const reservasData = Array.isArray(reservasRes.data?.data) ? reservasRes.data.data : [];
+      const espacosData = Array.isArray(espacosRes.data?.data) ? espacosRes.data.data : [];
+      const amenidadesData = Array.isArray(amenidadesRes.data?.data) ? amenidadesRes.data.data : [];
 
       const today = new Date().toISOString().split('T')[0];
       const reservasHoje = reservasData.filter(reserva => 

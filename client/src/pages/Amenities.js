@@ -22,7 +22,7 @@ const Amenities = () => {
   const fetchAmenities = async () => {
     try {
       const response = await amenitiesAPI.getAll();
-      setAmenities(response.data);
+      setAmenities(response.data.data);
     } catch (error) {
       setError('Erro ao carregar amenidades');
     }

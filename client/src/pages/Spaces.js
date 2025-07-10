@@ -26,7 +26,7 @@ const Spaces = () => {
   const fetchSpaces = async () => {
     try {
       const response = await spacesAPI.getAll();
-      setSpaces(response.data);
+      setSpaces(response.data.data);
     } catch (error) {
       setError('Erro ao carregar espaços');
     }

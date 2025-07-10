@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { reservationsAPI, spacesAPI } from '../services/api';
+import '../styles/datetime-br.css';
 
 const Reservations = () => {
   const { user, isAdminOrGestor } = useAuth();
@@ -18,6 +19,84 @@ const Reservations = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Função para gerar valores padrão das datas
+  const getDefaultDates = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0); // 9:00 AM
+    
+    const endTime = new Date(tomorrow);
+    endTime.setHours(10, 0, 0, 0); // 10:00 AM (1 hora depois)
+    
+    return {
+      dataInicio: tomorrow.toISOString().slice(0, 16),
+      dataFim: endTime.toISOString().slice(0, 16)
+    };
+  };
+
+
+  // Componente customizado para input de data/hora com formatação brasileira
+  const DateTimeInput = ({ label, value, onChange, required = false }) => {
+    // Converter formato ISO para brasileiro para exibição
+    const formatToBrazilian = (isoValue) => {
+      if (!isoValue) return '';
+      const date = new Date(isoValue);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const hour = date.getHours().toString().padStart(2, '0');
+      const minute = date.getMinutes().toString().padStart(2, '0');
+      return `${day}/${month}/${year} ${hour}:${minute}`;
+    };
+
+    // Converter formato brasileiro para ISO
+    const formatToISO = (brValue) => {
+      if (!brValue) return '';
+      const regex = /(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2})/;
+      const match = brValue.match(regex);
+      if (match) {
+        const [, day, month, year, hour, minute] = match;
+        const date = new Date(year, month - 1, day, hour, minute);
+        return date.toISOString().slice(0, 16);
+      }
+      return brValue;
+    };
+
+    const [displayValue, setDisplayValue] = useState(formatToBrazilian(value));
+
+    useEffect(() => {
+      setDisplayValue(formatToBrazilian(value));
+    }, [value]);
+
+    const handleChange = (e) => {
+      const inputValue = e.target.value;
+      setDisplayValue(inputValue);
+      
+      // Converter para ISO se necessário
+      const isoValue = formatToISO(inputValue);
+      onChange(isoValue);
+    };
+
+    return (
+      <Form.Group className="mb-3">
+        <Form.Label>{label} {required && '*'}</Form.Label>
+        <Form.Control
+          type="text"
+          value={displayValue}
+          onChange={handleChange}
+          required={required}
+          placeholder="DD/MM/AAAA HH:MM"
+          pattern="[0-9]{2}/[0-9]{2}/[0-9]{4} [0-9]{2}:[0-9]{2}"
+          title="Formato: DD/MM/AAAA HH:MM"
+        />
+        <Form.Text className="text-muted">
+          Formato: DD/MM/AAAA HH:MM (ex: 11/07/2025 14:30)
+        </Form.Text>
+      </Form.Group>
+    );
+  };
 
   useEffect(() => {
     fetchReservations();
@@ -47,6 +126,38 @@ const Reservations = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Validação no frontend
+    const startDate = new Date(formData.dataInicio);
+    const endDate = new Date(formData.dataFim);
+    const now = new Date();
+
+    // Verificar se a data de início é no futuro
+    if (startDate <= now) {
+      setError('A data de início deve ser no futuro.');
+      return;
+    }
+
+    // Verificar se a data de fim é após a data de início
+    if (endDate <= startDate) {
+      setError('A data de fim deve ser após a data de início.');
+      return;
+    }
+
+    // Verificar se a reserva não excede 24 horas
+    const maxDuration = 24 * 60 * 60 * 1000; // 24 horas em milissegundos
+    if (endDate - startDate > maxDuration) {
+      setError('A reserva não pode exceder 24 horas.');
+      return;
+    }
+
+    // Verificar se a reserva não é mais de 1 ano no futuro
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    if (startDate > oneYearFromNow) {
+      setError('Reservas não podem ser feitas com mais de 1 ano de antecedência.');
+      return;
+    }
 
     try {
       const submitData = {
@@ -95,6 +206,28 @@ const Reservations = () => {
     }
   };
 
+  const handleApprove = async (id) => {
+    try {
+      await reservationsAPI.updateStatus(id, 'confirmada');
+      setSuccess('Reserva aprovada com sucesso!');
+      fetchReservations();
+    } catch (error) {
+      setError('Erro ao aprovar reserva');
+    }
+  };
+
+  const handleReject = async (id) => {
+    if (window.confirm('Tem certeza que deseja rejeitar esta reserva?')) {
+      try {
+        await reservationsAPI.updateStatus(id, 'cancelada');
+        setSuccess('Reserva rejeitada com sucesso!');
+        fetchReservations();
+      } catch (error) {
+        setError('Erro ao rejeitar reserva');
+      }
+    }
+  };
+
   const canEditReservation = (reservation) => {
     return isAdminOrGestor() || reservation.usuarioId === user?.id;
   };
@@ -126,7 +259,17 @@ const Reservations = () => {
           <h1>Reservas</h1>
         </Col>
         <Col xs="auto">
-          <Button variant="primary" onClick={() => setShowModal(true)}>
+          <Button variant="primary" onClick={() => {
+            const defaultDates = getDefaultDates();
+            setFormData({
+              titulo: '',
+              dataInicio: defaultDates.dataInicio,
+              dataFim: defaultDates.dataFim,
+              descricao: '',
+              espacoId: ''
+            });
+            setShowModal(true);
+          }}>
             Nova Reserva
           </Button>
         </Col>
@@ -156,11 +299,45 @@ const Reservations = () => {
                   <td>{reservation.id}</td>
                   <td>{reservation.titulo}</td>
                   <td>{reservation.Espaco?.nome}</td>
-                  <td>{new Date(reservation.dataInicio).toLocaleString('pt-BR')}</td>
-                  <td>{new Date(reservation.dataFim).toLocaleString('pt-BR')}</td>
+                  <td>{new Date(reservation.dataInicio).toLocaleString('pt-BR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}</td>
+                  <td>{new Date(reservation.dataFim).toLocaleString('pt-BR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}</td>
                   <td>{getStatusBadge(reservation.status)}</td>
                   {isAdminOrGestor() && <td>{reservation.usuario?.nome}</td>}
                   <td>
+                    {isAdminOrGestor() && reservation.status === 'pendente' && (
+                      <>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleApprove(reservation.id)}
+                        >
+                          Aprovar
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleReject(reservation.id)}
+                        >
+                          Rejeitar
+                        </Button>
+                      </>
+                    )}
                     {canEditReservation(reservation) && (
                       <>
                         <Button
@@ -236,26 +413,20 @@ const Reservations = () => {
             
             <Row>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Data/Hora Início *</Form.Label>
-                  <Form.Control
-                    type="datetime-local"
-                    value={formData.dataInicio}
-                    onChange={(e) => setFormData({...formData, dataInicio: e.target.value})}
-                    required
-                  />
-                </Form.Group>
+                <DateTimeInput
+                  label="Data/Hora Início"
+                  value={formData.dataInicio}
+                  onChange={(value) => setFormData({...formData, dataInicio: value})}
+                  required={true}
+                />
               </Col>
               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Data/Hora Fim *</Form.Label>
-                  <Form.Control
-                    type="datetime-local"
-                    value={formData.dataFim}
-                    onChange={(e) => setFormData({...formData, dataFim: e.target.value})}
-                    required
-                  />
-                </Form.Group>
+                <DateTimeInput
+                  label="Data/Hora Fim"
+                  value={formData.dataFim}
+                  onChange={(value) => setFormData({...formData, dataFim: value})}
+                  required={true}
+                />
               </Col>
             </Row>
 

@@ -57,11 +57,11 @@ module.exports = {
             throw new NotFoundError('Space not found or inactive');
         }
         
-        // Check for conflicting reservations
+        // Check for conflicting reservations (both confirmed and pending)
         const conflictingReservations = await db.Reserva.findAll({
             where: {
                 espacoId,
-                status: 'confirmada',
+                status: { [Op.in]: ['confirmada', 'pendente'] },
                 [Op.or]: [
                     {
                         dataInicio: {
@@ -165,6 +165,11 @@ module.exports = {
         const reserva = await db.Reserva.findByPk(id);
         if (!reserva) {
             throw new NotFoundError('Reservation not found');
+        }
+        
+        // Security: Only administrators can change reservation status
+        if (!isAdmin(req)) {
+            throw new ForbiddenError('Only administrators can change reservation status');
         }
         
         await reserva.update({ status });

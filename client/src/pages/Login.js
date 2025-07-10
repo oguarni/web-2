@@ -31,7 +31,7 @@ const Login = () => {
     // 2. Verifique o resultado retornado pelo AuthContext
     if (result.success) {
       // 3. Só navegue se o resultado for sucesso
-      navigate('/dashboard');
+      navigate('/');
     } else {
       // 4. Se não, mostre o erro que veio do AuthContext
       setError(result.error);

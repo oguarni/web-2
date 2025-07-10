@@ -71,8 +71,7 @@ export const reservationsAPI = {
   create: (data) => apiClient.post('/reservas', data),
   update: (id, data) => apiClient.put(`/reservas/${id}`, data),
   delete: (id) => apiClient.delete(`/reservas/${id}`),
-  approve: (id) => apiClient.patch(`/reservas/${id}/aprovar`),
-  reject: (id) => apiClient.patch(`/reservas/${id}/rejeitar`),
+  updateStatus: (id, status) => apiClient.put(`/reservas/${id}/status`, { status }),
 };
 
 // Users API

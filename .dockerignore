@@ -1,0 +1,12 @@
+# Ignorar dependências do Node
+node_modules
+
+# Ignorar logs de debug do NPM
+npm-debug.log
+
+# Ignorar arquivos do Git
+.git
+.gitignore
+
+# Ignorar arquivos de ambiente (nunca devem ir para a imagem)
+.env

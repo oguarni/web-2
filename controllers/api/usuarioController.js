@@ -112,6 +112,17 @@ module.exports = {
             throw new ValidationError('Cannot delete your own account');
         }
         
+        // Check for associated reservations
+        const reservasCount = await db.Reserva.count({
+            where: { usuarioId: id }
+        });
+        
+        if (reservasCount > 0) {
+            throw new ValidationError(
+                `Cannot delete user: User has ${reservasCount} associated reservation(s). Please remove or reassign reservations before deleting the user.`
+            );
+        }
+        
         await usuario.destroy();
         
         res.json({
