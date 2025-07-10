@@ -581,14 +581,16 @@ async function testLogManagement() {
 
     // Test create log (admin)
     await runTest('Create Log (Admin)', async () => {
-        const uniqueTimestamp = Date.now();
-        const response = await makeRequest('POST', '/logs', {
+        const uniqueTimestamp = new Date().toISOString();
+        const logData = {
+            usuarioId: 1, // Use the guaranteed admin user ID
+            acao: `test_action_${uniqueTimestamp}`,
             level: 'info',
-            message: `Test log message created at ${new Date().toISOString()}`,
-            usuarioId: 1, // Use admin user ID (guaranteed to exist)
-            acao: `test_action_${uniqueTimestamp}`
-        }, adminToken);
-        if (response.success && response.data.data) {
+            message: `Test log message created at ${uniqueTimestamp}`
+        };
+        
+        const response = await makeRequest('POST', '/logs', logData, adminToken);
+        if (response.success && response.data.http_code === 201) {
             return { success: true, message: 'Log created successfully' };
         }
         return { success: false, message: 'Failed to create log' };
@@ -651,54 +653,44 @@ async function testEdgeCases() {
     });
 
     // Test XSS attempt
-    await runTest('XSS Attempt', async () => {
-        const maliciousName = 'XSS User <script>alert("xss")</script>';
-        const uniqueLogin = `xsstest${Date.now()}`; // Remove underscore to pass validation
-        
-        // Stage 1: Create user with malicious payload
-        const createResponse = await makeRequest('POST', '/usuarios', {
+    await runTest('XSS Attempt on User Creation and Retrieval', async () => {
+        // Stage 1: Create a NEW user with a malicious payload
+        const maliciousName = 'XSS User <script>alert("pwned")</script>';
+        const uniqueLogin = `xss_test_user_${Date.now()}`; // Unique and valid login
+
+        const createUserResponse = await makeRequest('POST', '/usuarios', {
             nome: maliciousName,
             login: uniqueLogin,
-            senha: 'password123',
-            tipo: 2
+            senha: 'ValidPassword123!',
+            tipo: 2 // Assuming '2' is a standard user type
         }, adminToken);
-        
-        if (!createResponse.success) {
-            return { success: false, message: `Failed to create user for XSS test: ${createResponse.error?.error || createResponse.error}` };
+
+        if (!createUserResponse.success || createUserResponse.data.http_code !== 201) {
+            // This will give a clear error if the user creation fails
+            return { success: false, message: `Failed to create user for XSS test. Reason: ${JSON.stringify(createUserResponse.error)}` };
+        }
+
+        const newUserId = createUserResponse.data.data.id;
+
+        // Stage 2: Retrieve the newly created user and verify sanitization
+        const getUserResponse = await makeRequest('GET', `/usuarios/${newUserId}`, null, adminToken);
+
+        // Cleanup: Always attempt to delete the user, even if assertion fails
+        await makeRequest('DELETE', `/usuarios/${newUserId}`, null, adminToken);
+
+        if (!getUserResponse.success) {
+            return { success: false, message: 'Failed to retrieve user for XSS verification.' };
+        }
+
+        const retrievedName = getUserResponse.data.data.nome;
+        const expectedSanitizedName = 'XSS User &lt;script&gt;alert("pwned")&lt;/script&gt;';
+
+        // The core assertion: check if the name was properly escaped
+        if (retrievedName === expectedSanitizedName) {
+            return { success: true, message: 'XSS attempt was correctly sanitized.' };
         }
         
-        const createdUserId = createResponse.data.data.id;
-        
-        // Stage 2: Retrieve user and verify sanitization
-        const getResponse = await makeRequest('GET', `/usuarios/${createdUserId}`, null, adminToken);
-        
-        if (!getResponse.success) {
-            return { success: false, message: 'Failed to retrieve user for XSS verification' };
-        }
-        
-        const retrievedUser = getResponse.data.data;
-        
-        // Check that script tags were sanitized (should be escaped or stripped)
-        if (retrievedUser.nome.includes('<script>')) {
-            return { success: false, message: 'XSS content should be sanitized' };
-        }
-        
-        // Check that legitimate content remains and script tags are properly sanitized
-        // The XSS middleware can either escape the tags or strip them completely
-        const expectedEscaped = 'XSS User &lt;script&gt;alert("xss")&lt;/script&gt;';
-        const expectedStripped = 'XSS User';
-        
-        if (retrievedUser.nome === expectedEscaped || 
-            retrievedUser.nome === expectedStripped ||
-            (retrievedUser.nome.includes('XSS User') && !retrievedUser.nome.includes('<script>'))) {
-            // Clean up the test user
-            await makeRequest('DELETE', `/usuarios/${createdUserId}`, null, adminToken);
-            return { success: true, message: 'XSS content properly sanitized while preserving valid content' };
-        }
-        
-        // Clean up the test user
-        await makeRequest('DELETE', `/usuarios/${createdUserId}`, null, adminToken);
-        return { success: false, message: `XSS sanitization failed. Expected escaped or stripped content but got: ${retrievedUser.nome}` };
+        return { success: false, message: `XSS sanitization failed. Expected: ${expectedSanitizedName}, but got: ${retrievedName}` };
     });
 }
 

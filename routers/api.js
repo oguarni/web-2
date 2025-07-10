@@ -20,24 +20,36 @@ const logController = require('../controllers/api/logController');
 const amenityController = require('../controllers/api/amenityController');
 const espacoAmenityController = require('../controllers/api/espacoAmenityController');
 
+// =================================================================
+// ROTAS PÚBLICAS (Não requerem token)
+// =================================================================
+
 // Auth routes
 router.post('/auth/login', validateAuth.login, authController.login);
-router.get('/auth/me', validateToken, authController.me);
-router.get('/auth/verify', validateToken, (req, res) => {
-  res.json({ user: req.user });
-});
+
+// User registration route
+router.post('/usuarios', validateUser.create, usuarioController.create);
 
 // Health check endpoint - publicly accessible for container monitoring
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Protected routes - require valid token
+
+// =================================================================
+// ROTAS PROTEGIDAS (Requerem um token válido a partir daqui)
+// =================================================================
 router.use(validateToken);
 
+// Auth routes that require a token
+router.get('/auth/me', authController.me);
+router.get('/auth/verify', (req, res) => {
+  res.json({ user: req.user });
+});
+
 // User routes (Admin: full CRUD, Manager: read-only)
+// A criação de usuário foi movida para cima para ser pública.
 router.get('/usuarios', checkRole(['admin', 'manager']), usuarioController.index);
-router.post('/usuarios', requireAdmin, validateUser.create, usuarioController.create);
 router.get('/usuarios/:id', checkRole(['admin', 'manager']), validateUser.idParam, usuarioController.show);
 router.put('/usuarios/:id', requireAdmin, validateUser.idParam, validateUser.update, usuarioController.update);
 router.delete('/usuarios/:id', requireAdmin, validateUser.idParam, usuarioController.delete);
