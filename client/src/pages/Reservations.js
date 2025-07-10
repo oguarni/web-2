@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { reservationsAPI, spacesAPI } from '../services/api';
 import '../styles/datetime-br.css';
 
 const Reservations = () => {
-  const { user, isAdminOrGestor } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [reservations, setReservations] = useState([]);
   const [spaces, setSpaces] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -19,6 +19,8 @@ const Reservations = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   // Função para gerar valores padrão das datas
   const getDefaultDates = () => {
@@ -99,8 +101,12 @@ const Reservations = () => {
   };
 
   useEffect(() => {
-    fetchReservations();
-    fetchSpaces();
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchReservations(), fetchSpaces()]);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -116,8 +122,9 @@ const Reservations = () => {
     try {
       const response = await reservationsAPI.getAll();
       setReservations(response.data.data || []);
+      setError('');
     } catch (error) {
-      setError('Erro ao carregar reservas');
+      setError('Error loading reservations');
     }
   };
 
@@ -134,36 +141,37 @@ const Reservations = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSubmitting(true);
 
-    // Validação no frontend
+    // Frontend validation
     const startDate = new Date(formData.dataInicio);
     const endDate = new Date(formData.dataFim);
     const now = new Date();
 
-    // Verificar se a data de início é no futuro
     if (startDate <= now) {
-      setError('A data de início deve ser no futuro.');
+      setError('Start date must be in the future.');
+      setSubmitting(false);
       return;
     }
 
-    // Verificar se a data de fim é após a data de início
     if (endDate <= startDate) {
-      setError('A data de fim deve ser após a data de início.');
+      setError('End date must be after start date.');
+      setSubmitting(false);
       return;
     }
 
-    // Verificar se a reserva não excede 24 horas
-    const maxDuration = 24 * 60 * 60 * 1000; // 24 horas em milissegundos
+    const maxDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     if (endDate - startDate > maxDuration) {
-      setError('A reserva não pode exceder 24 horas.');
+      setError('Reservation cannot exceed 24 hours.');
+      setSubmitting(false);
       return;
     }
 
-    // Verificar se a reserva não é mais de 1 ano no futuro
     const oneYearFromNow = new Date();
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
     if (startDate > oneYearFromNow) {
-      setError('Reservas não podem ser feitas com mais de 1 ano de antecedência.');
+      setError('Reservations cannot be made more than 1 year in advance.');
+      setSubmitting(false);
       return;
     }
 
@@ -175,10 +183,10 @@ const Reservations = () => {
 
       if (editingReservation) {
         await reservationsAPI.update(editingReservation.id, submitData);
-        setSuccess('Reserva atualizada com sucesso!');
+        setSuccess('Reservation updated successfully!');
       } else {
         await reservationsAPI.create(submitData);
-        setSuccess('Reserva criada com sucesso!');
+        setSuccess('Reservation created successfully!');
       }
       
       setShowModal(false);
@@ -186,7 +194,9 @@ const Reservations = () => {
       setEditingReservation(null);
       fetchReservations();
     } catch (error) {
-      setError(error.response?.data?.message || 'Erro ao salvar reserva');
+      setError(error.response?.data?.message || 'Error saving reservation');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -237,7 +247,7 @@ const Reservations = () => {
   };
 
   const canEditReservation = (reservation) => {
-    return isAdminOrGestor() || reservation.usuarioId === user?.id;
+    return isAdmin() || reservation.usuarioId === user?.id;
   };
 
   const getStatusBadge = (status) => {
@@ -256,7 +266,7 @@ const Reservations = () => {
     setError('');
   };
 
-  const filteredReservations = isAdminOrGestor() 
+  const filteredReservations = isAdmin() 
     ? reservations 
     : reservations.filter(r => r.usuarioId === user?.id);
 
@@ -264,7 +274,7 @@ const Reservations = () => {
     <Container className="mt-4">
       <Row className="mb-4">
         <Col>
-          <h1>Reservas</h1>
+          <h1>My Reservations</h1>
         </Col>
         <Col xs="auto">
           <Button variant="primary" onClick={() => {
@@ -278,27 +288,35 @@ const Reservations = () => {
             });
             setShowModal(true);
           }}>
-            Nova Reserva
+            New Reservation
           </Button>
         </Col>
       </Row>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Card>
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" role="status" variant="primary">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="mt-2">Loading reservations...</p>
+        </div>
+      ) : (
+        <Card>
         <Card.Body>
           <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Título</th>
-                <th>Espaço</th>
-                <th>Data/Hora Início</th>
-                <th>Data/Hora Fim</th>
+                <th>Title</th>
+                <th>Space</th>
+                <th>Start Date/Time</th>
+                <th>End Date/Time</th>
                 <th>Status</th>
-                {isAdminOrGestor() && <th>Usuário</th>}
-                <th>Ações</th>
+                {isAdmin() && <th>User</th>}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -324,9 +342,9 @@ const Reservations = () => {
                     hour12: false
                   })}</td>
                   <td>{getStatusBadge(reservation.status)}</td>
-                  {isAdminOrGestor() && <td>{reservation.usuario?.nome}</td>}
+                  {isAdmin() && <td>{reservation.usuario?.nome}</td>}
                   <td>
-                    {isAdminOrGestor() && reservation.status === 'pendente' && (
+                    {isAdmin() && reservation.status === 'pendente' && (
                       <>
                         <Button
                           variant="success"
@@ -334,7 +352,7 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleApprove(reservation.id)}
                         >
-                          Aprovar
+                          Approve
                         </Button>
                         <Button
                           variant="danger"
@@ -342,7 +360,7 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleReject(reservation.id)}
                         >
-                          Rejeitar
+                          Reject
                         </Button>
                       </>
                     )}
@@ -354,14 +372,14 @@ const Reservations = () => {
                           className="me-2"
                           onClick={() => handleEdit(reservation)}
                         >
-                          Editar
+                          Edit
                         </Button>
                         <Button
                           variant="outline-danger"
                           size="sm"
                           onClick={() => handleDelete(reservation.id)}
                         >
-                          Excluir
+                          Delete
                         </Button>
                       </>
                     )}
@@ -372,17 +390,18 @@ const Reservations = () => {
           </Table>
           {filteredReservations.length === 0 && (
             <div className="text-center py-4">
-              <p>Nenhuma reserva encontrada.</p>
+              <p>No reservations found.</p>
             </div>
           )}
         </Card.Body>
-      </Card>
+        </Card>
+      )}
 
       {/* Modal para criar/editar reserva */}
       <Modal show={showModal} onHide={handleCloseModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingReservation ? 'Editar Reserva' : 'Nova Reserva'}
+            {editingReservation ? 'Edit Reservation' : 'New Reservation'}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -391,7 +410,7 @@ const Reservations = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Título *</Form.Label>
+                  <Form.Label>Title *</Form.Label>
                   <Form.Control
                     type="text"
                     value={formData.titulo}
@@ -402,13 +421,13 @@ const Reservations = () => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Espaço *</Form.Label>
+                  <Form.Label>Space *</Form.Label>
                   <Form.Select
                     value={formData.espacoId}
                     onChange={(e) => setFormData({...formData, espacoId: e.target.value})}
                     required
                   >
-                    <option value="">Selecione um espaço</option>
+                    <option value="">Select a space</option>
                     {spaces.map(space => (
                       <option key={space.id} value={space.id}>
                         {space.nome} - {space.localizacao}
@@ -422,7 +441,7 @@ const Reservations = () => {
             <Row>
               <Col md={6}>
                 <DateTimeInput
-                  label="Data/Hora Início"
+                  label="Start Date/Time"
                   value={formData.dataInicio}
                   onChange={(value) => setFormData({...formData, dataInicio: value})}
                   required={true}
@@ -430,7 +449,7 @@ const Reservations = () => {
               </Col>
               <Col md={6}>
                 <DateTimeInput
-                  label="Data/Hora Fim"
+                  label="End Date/Time"
                   value={formData.dataFim}
                   onChange={(value) => setFormData({...formData, dataFim: value})}
                   required={true}
@@ -439,22 +458,29 @@ const Reservations = () => {
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>Descrição</Form.Label>
+              <Form.Label>Description</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 value={formData.descricao}
                 onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                placeholder="Descrição opcional da reserva"
+                placeholder="Optional description for the reservation"
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end">
-              <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
-                Cancelar
+              <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={submitting}>
+                Cancel
               </Button>
-              <Button variant="primary" type="submit">
-                {editingReservation ? 'Atualizar' : 'Criar'}
+              <Button variant="primary" type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
+                    {editingReservation ? 'Updating...' : 'Creating...'}
+                  </>
+                ) : (
+                  editingReservation ? 'Update' : 'Create'
+                )}
               </Button>
             </div>
           </Form>

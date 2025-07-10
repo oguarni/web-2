@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
-import { spacesAPI } from '../services/api';
+import { spacesAPI, reservationsAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const Spaces = () => {
-  const { isAdminOrGestor } = useAuth();
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [spaces, setSpaces] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [editingSpace, setEditingSpace] = useState(null);
+  const [selectedSpace, setSelectedSpace] = useState(null);
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
@@ -16,8 +20,16 @@ const Spaces = () => {
     equipamentos: '',
     ativo: true
   });
+  const [reservationData, setReservationData] = useState({
+    titulo: '',
+    dataInicio: '',
+    dataFim: '',
+    descricao: ''
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchSpaces();
@@ -102,175 +114,376 @@ const Spaces = () => {
     setError('');
   };
 
-  if (!isAdminOrGestor()) {
-    return (
-      <Container className="mt-4">
-        <Alert variant="warning">
-          Você não tem permissão para acessar esta página.
-        </Alert>
-      </Container>
-    );
-  }
+  const getDefaultReservationDates = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    
+    const endTime = new Date(tomorrow);
+    endTime.setHours(10, 0, 0, 0);
+    
+    return {
+      dataInicio: tomorrow.toISOString().slice(0, 16),
+      dataFim: endTime.toISOString().slice(0, 16)
+    };
+  };
+
+  const handleBookSpace = (space) => {
+    setSelectedSpace(space);
+    const defaultDates = getDefaultReservationDates();
+    setReservationData({
+      titulo: `Reservation for ${space.nome}`,
+      dataInicio: defaultDates.dataInicio,
+      dataFim: defaultDates.dataFim,
+      descricao: ''
+    });
+    setShowReservationModal(true);
+  };
+
+  const handleReservationSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const startDate = new Date(reservationData.dataInicio);
+    const endDate = new Date(reservationData.dataFim);
+    const now = new Date();
+
+    if (startDate <= now) {
+      setError('Start date must be in the future.');
+      return;
+    }
+
+    if (endDate <= startDate) {
+      setError('End date must be after start date.');
+      return;
+    }
+
+    try {
+      const submitData = {
+        ...reservationData,
+        espacoId: selectedSpace.id
+      };
+
+      await reservationsAPI.create(submitData);
+      setSuccess('Reservation created successfully!');
+      setShowReservationModal(false);
+      setReservationData({ titulo: '', dataInicio: '', dataFim: '', descricao: '' });
+      setSelectedSpace(null);
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error creating reservation');
+    }
+  };
+
+  const handleCloseReservationModal = () => {
+    setShowReservationModal(false);
+    setSelectedSpace(null);
+    setReservationData({ titulo: '', dataInicio: '', dataFim: '', descricao: '' });
+    setError('');
+  };
 
   return (
     <Container className="mt-4">
       <Row className="mb-4">
         <Col>
-          <h1>Espaços</h1>
+          <h1>Spaces</h1>
         </Col>
-        <Col xs="auto">
-          <Button variant="primary" onClick={() => setShowModal(true)}>
-            Novo Espaço
-          </Button>
-        </Col>
+        {isAdmin() && (
+          <Col xs="auto">
+            <Button variant="primary" onClick={() => setShowModal(true)}>
+              New Space
+            </Button>
+          </Col>
+        )}
       </Row>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Card>
-        <Card.Body>
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Localização</th>
-                <th>Capacidade</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {spaces.map(space => (
-                <tr key={space.id}>
-                  <td>{space.id}</td>
-                  <td>{space.nome}</td>
-                  <td>{space.localizacao}</td>
-                  <td>{space.capacidade} pessoas</td>
-                  <td>
-                    <Badge bg={space.ativo ? 'success' : 'danger'}>
-                      {space.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEdit(space)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDelete(space.id)}
-                    >
-                      Excluir
-                    </Button>
-                  </td>
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" role="status" variant="primary">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="mt-2">Loading spaces...</p>
+        </div>
+      ) : (
+        isAdmin() ? (
+        // Admin Table View
+        <Card>
+          <Card.Body>
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Location</th>
+                  <th>Capacity</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-          {spaces.length === 0 && (
-            <div className="text-center py-4">
-              <p>Nenhum espaço encontrado.</p>
-            </div>
+              </thead>
+              <tbody>
+                {spaces.map(space => (
+                  <tr key={space.id}>
+                    <td>{space.id}</td>
+                    <td>{space.nome}</td>
+                    <td>{space.localizacao}</td>
+                    <td>{space.capacidade} people</td>
+                    <td>
+                      <Badge bg={space.ativo ? 'success' : 'danger'}>
+                        {space.ativo ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleEdit(space)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleDelete(space.id)}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            {spaces.length === 0 && (
+              <div className="text-center py-4">
+                <p>No spaces found.</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      ) : (
+        // User Card View
+        <Row>
+          {spaces.filter(space => space.ativo).map(space => (
+            <Col key={space.id} md={4} className="mb-4">
+              <Card className="h-100">
+                <Card.Body className="d-flex flex-column">
+                  <Card.Title>{space.nome}</Card.Title>
+                  <Card.Text>
+                    <strong>Location:</strong> {space.localizacao}<br />
+                    <strong>Capacity:</strong> {space.capacidade} people<br />
+                    {space.descricao && (
+                      <><strong>Description:</strong> {space.descricao}<br /></>
+                    )}
+                    {space.equipamentos && (
+                      <><strong>Equipment:</strong> {space.equipamentos}</>
+                    )}
+                  </Card.Text>
+                  <div className="mt-auto">
+                    <Button 
+                      variant="primary" 
+                      className="w-100"
+                      onClick={() => handleBookSpace(space)}
+                    >
+                      Book This Space
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+          {spaces.filter(space => space.ativo).length === 0 && (
+            <Col>
+              <div className="text-center py-4">
+                <p>No active spaces found.</p>
+              </div>
+            </Col>
           )}
-        </Card.Body>
-      </Card>
+        </Row>
+        )
+      )}
 
-      {/* Modal para criar/editar espaço */}
-      <Modal show={showModal} onHide={handleCloseModal} size="lg">
+      {/* Modal para criar/editar espaço - Admin only */}
+      {isAdmin() && (
+        <Modal show={showModal} onHide={handleCloseModal} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {editingSpace ? 'Edit Space' : 'New Space'}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {error && <Alert variant="danger">{error}</Alert>}
+            <Form onSubmit={handleSubmit}>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Name *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Location *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={formData.localizacao}
+                      onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Capacity *</Form.Label>
+                    <Form.Control
+                      type="number"
+                      min="1"
+                      value={formData.capacidade}
+                      onChange={(e) => setFormData({...formData, capacidade: e.target.value})}
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Status</Form.Label>
+                    <Form.Select
+                      value={formData.ativo}
+                      onChange={(e) => setFormData({...formData, ativo: e.target.value === 'true'})}
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Equipment</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  value={formData.equipamentos}
+                  onChange={(e) => setFormData({...formData, equipamentos: e.target.value})}
+                  placeholder="List available equipment"
+                />
+              </Form.Group>
+
+              <div className="d-flex justify-content-end">
+                <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={submitting}>
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
+                      {editingSpace ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    editingSpace ? 'Update' : 'Create'
+                  )}
+                </Button>
+              </div>
+            </Form>
+          </Modal.Body>
+        </Modal>
+      )}
+
+      {/* Modal para criar reserva - User booking */}
+      <Modal show={showReservationModal} onHide={handleCloseReservationModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingSpace ? 'Editar Espaço' : 'Novo Espaço'}
+            Book {selectedSpace?.nome}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nome *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Localização *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.localizacao}
-                    onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+          <div className="mb-3">
+            <strong>Space:</strong> {selectedSpace?.nome}<br />
+            <strong>Location:</strong> {selectedSpace?.localizacao}<br />
+            <strong>Capacity:</strong> {selectedSpace?.capacidade} people
+          </div>
+          <Form onSubmit={handleReservationSubmit}>
+            <Form.Group className="mb-3">
+              <Form.Label>Title *</Form.Label>
+              <Form.Control
+                type="text"
+                value={reservationData.titulo}
+                onChange={(e) => setReservationData({...reservationData, titulo: e.target.value})}
+                required
+              />
+            </Form.Group>
             
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Capacidade *</Form.Label>
+                  <Form.Label>Start Date/Time *</Form.Label>
                   <Form.Control
-                    type="number"
-                    min="1"
-                    value={formData.capacidade}
-                    onChange={(e) => setFormData({...formData, capacidade: e.target.value})}
+                    type="datetime-local"
+                    value={reservationData.dataInicio}
+                    onChange={(e) => setReservationData({...reservationData, dataInicio: e.target.value})}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Status</Form.Label>
-                  <Form.Select
-                    value={formData.ativo}
-                    onChange={(e) => setFormData({...formData, ativo: e.target.value === 'true'})}
-                  >
-                    <option value="true">Ativo</option>
-                    <option value="false">Inativo</option>
-                  </Form.Select>
+                  <Form.Label>End Date/Time *</Form.Label>
+                  <Form.Control
+                    type="datetime-local"
+                    value={reservationData.dataFim}
+                    onChange={(e) => setReservationData({...reservationData, dataFim: e.target.value})}
+                    required
+                  />
                 </Form.Group>
               </Col>
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>Descrição</Form.Label>
+              <Form.Label>Description</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                value={formData.descricao}
-                onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Equipamentos</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                value={formData.equipamentos}
-                onChange={(e) => setFormData({...formData, equipamentos: e.target.value})}
-                placeholder="Liste os equipamentos disponíveis"
+                value={reservationData.descricao}
+                onChange={(e) => setReservationData({...reservationData, descricao: e.target.value})}
+                placeholder="Optional description for your reservation"
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end">
-              <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
-                Cancelar
+              <Button variant="secondary" className="me-2" onClick={handleCloseReservationModal} disabled={submitting}>
+                Cancel
               </Button>
-              <Button variant="primary" type="submit">
-                {editingSpace ? 'Atualizar' : 'Criar'}
+              <Button variant="primary" type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Spinner as="span" animation="border" size="sm" role="status" className="me-2" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Reservation'
+                )}
               </Button>
             </div>
           </Form>

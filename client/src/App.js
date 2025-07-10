@@ -1,12 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// Componentes de Rota
+// Componentes
 import ProtectedRoute from './components/ProtectedRoute';
-import PublicRoute from './components/PublicRoute'; // Importamos o novo componente
-
-// Componentes de Página
+import PublicRoute from './components/PublicRoute';
 import Navigation from './components/Navigation';
+
+// Páginas
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -18,12 +18,9 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        {/* O menu de navegação aparecerá em todas as páginas */}
         <Navigation />
         <Routes>
-          {/* A rota de login agora é uma rota pública.
-            Um usuário logado que tentar acessá-la será redirecionado para o dashboard.
-          */}
+          {/* Rota Pública: Apenas usuários não logados podem ver */}
           <Route 
             path="/login" 
             element={
@@ -33,16 +30,20 @@ function App() {
             } 
           />
 
-          {/* Rotas Protegidas.
-            Apenas usuários autenticados podem acessá-las.
-          */}
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-          <Route path="/spaces" element={<ProtectedRoute><Spaces /></ProtectedRoute>} />
-          <Route path="/amenities" element={<ProtectedRoute><Amenities /></ProtectedRoute>} />
-          <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+          {/* Layout de Rotas Protegidas */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/spaces" element={<Spaces />} />
+            <Route path="/amenities" element={<Amenities />} />
+            <Route path="/reservations" element={<Reservations />} />
+            {/* Adicione outras rotas protegidas aqui dentro */}
+          </Route>
           
-          {/* Uma rota "catch-all" para páginas não encontradas */}
+          {/* Redirecionamento da rota raiz. Se o usuário acessar "/", ele será levado para o dashboard. */}
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+
+          {/* Rota "catch-all" para páginas não encontradas */}
           <Route path="*" element={
             <div className="container mt-5 text-center">
               <h2>404 - Página Não Encontrada</h2>
