@@ -103,6 +103,15 @@ const Reservations = () => {
     fetchSpaces();
   }, []);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const fetchReservations = async () => {
     try {
       const response = await reservationsAPI.getAll();

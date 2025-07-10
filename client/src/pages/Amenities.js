@@ -19,6 +19,15 @@ const Amenities = () => {
     fetchAmenities();
   }, []);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const fetchAmenities = async () => {
     try {
       const response = await amenitiesAPI.getAll();

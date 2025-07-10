@@ -28,6 +28,15 @@ const Users = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const handleClose = () => {
     setShowModal(false);
     setCurrentUser(null);

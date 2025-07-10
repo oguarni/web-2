@@ -23,6 +23,15 @@ const Spaces = () => {
     fetchSpaces();
   }, []);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const fetchSpaces = async () => {
     try {
       const response = await spacesAPI.getAll();
