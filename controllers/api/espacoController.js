@@ -4,22 +4,22 @@ const { asyncHandler, NotFoundError, ConflictError, ValidationError } = require(
 module.exports = {
     // GET /api/espacos
     index: asyncHandler(async (req, res) => {
-        const { active } = req.query;
+        const { ativo } = req.query;
         let where = {};
         
-        if (active !== undefined) {
-            where.active = active === 'true';
+        if (ativo !== undefined) {
+            where.ativo = ativo === 'true';
         }
         
-        const spaces = await db.Space.findAll({
+        const espacos = await db.Espaco.findAll({
             where,
             include: [{ model: db.Amenity, as: 'amenities' }],
-            order: [['name', 'ASC']]
+            order: [['nome', 'ASC']]
         });
         
         res.json({
             success: true,
-            data: spaces
+            data: espacos
         });
     }),
     
@@ -27,14 +27,14 @@ module.exports = {
     show: asyncHandler(async (req, res) => {
         const { id } = req.params;
         
-        const space = await db.Space.findByPk(id, {
+        const espaco = await db.Espaco.findByPk(id, {
             include: [
                 {
-                    model: db.Reservation,
-                    as: 'reservations',
-                    attributes: ['id', 'title', 'startDate', 'endDate', 'status'],
+                    model: db.Reserva,
+                    as: 'reservas',
+                    attributes: ['id', 'titulo', 'dataInicio', 'dataFim', 'status'],
                     include: [
-                        { model: db.User, as: 'user', attributes: ['id', 'name'] }
+                        { model: db.Usuario, as: 'usuario', attributes: ['id', 'nome'] }
                     ]
                 },
                 { 
@@ -45,83 +45,83 @@ module.exports = {
             ]
         });
         
-        if (!space) {
+        if (!espaco) {
             throw new NotFoundError('Space not found');
         }
         
         res.json({
             success: true,
-            data: space
+            data: espaco
         });
     }),
     
     // POST /api/espacos
     create: asyncHandler(async (req, res) => {
-        const { name, description, capacity, location, equipment } = req.body;
+        const { nome, descricao, capacidade, localizacao, equipamentos } = req.body;
         
-        if (!name || !capacity || !location) {
+        if (!nome || !capacidade || !localizacao) {
             throw new ValidationError('Name, capacity and location are required');
         }
         
-        if (capacity <= 0) {
+        if (capacidade <= 0) {
             throw new ValidationError('Capacity must be greater than zero');
         }
         
-        const existingSpace = await db.Space.findOne({ where: { name } });
+        const existingSpace = await db.Espaco.findOne({ where: { nome } });
         if (existingSpace) {
             throw new ConflictError('Space name already exists');
         }
         
-        const space = await db.Space.create({
-            name,
-            description,
-            capacity,
-            location,
-            equipment,
-            active: true
+        const espaco = await db.Espaco.create({
+            nome,
+            descricao,
+            capacidade,
+            localizacao,
+            equipamentos,
+            ativo: true
         });
         
         res.status(201).json({
             success: true,
-            data: space
+            data: espaco
         });
     }),
     
     // PUT /api/espacos/:id
     update: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { name, description, capacity, location, equipment, active } = req.body;
+        const { nome, descricao, capacidade, localizacao, equipamentos, ativo } = req.body;
         
-        const space = await db.Space.findByPk(id);
-        if (!space) {
+        const espaco = await db.Espaco.findByPk(id);
+        if (!espaco) {
             throw new NotFoundError('Space not found');
         }
         
-        if (name && name !== space.name) {
-            const existingSpace = await db.Space.findOne({ 
-                where: { name, id: { [db.Sequelize.Op.ne]: id } } 
+        if (nome && nome !== espaco.nome) {
+            const existingSpace = await db.Espaco.findOne({ 
+                where: { nome, id: { [db.Sequelize.Op.ne]: id } } 
             });
             if (existingSpace) {
                 throw new ConflictError('Space name already exists');
             }
         }
         
-        if (capacity !== undefined && capacity <= 0) {
+        if (capacidade !== undefined && capacidade <= 0) {
             throw new ValidationError('Capacity must be greater than zero');
         }
         
-        await space.update({
-            name: name || space.name,
-            description: description !== undefined ? description : space.description,
-            capacity: capacity || space.capacity,
-            location: location || space.location,
-            equipment: equipment !== undefined ? equipment : space.equipment,
-            active: active !== undefined ? active : space.active
+        await espaco.update({
+            nome: nome || espaco.nome,
+            descricao: descricao !== undefined ? descricao : espaco.descricao,
+            capacidade: capacidade || espaco.capacidade,
+            localizacao: localizacao || espaco.localizacao,
+            equipamentos: equipamentos !== undefined ? equipamentos : espaco.equipamentos,
+            ativo: ativo !== undefined ? ativo : espaco.ativo
         });
         
         res.json({
             success: true,
-            data: space
+            data: espaco
         });
     }),
     
@@ -129,16 +129,16 @@ module.exports = {
     delete: asyncHandler(async (req, res) => {
         const { id } = req.params;
         
-        const space = await db.Space.findByPk(id);
-        if (!space) {
+        const espaco = await db.Espaco.findByPk(id);
+        if (!espaco) {
             throw new NotFoundError('Space not found');
         }
         
-        const activeReservations = await db.Reservation.count({
+        const activeReservations = await db.Reserva.count({
             where: {
-                spaceId: id,
-                status: ['confirmed', 'pending'],
-                endDate: { [db.Sequelize.Op.gte]: new Date() }
+                espacoId: id,
+                status: ['confirmada', 'pendente'],
+                dataFim: { [db.Sequelize.Op.gte]: new Date() }
             }
         });
         
@@ -146,7 +146,7 @@ module.exports = {
             throw new ConflictError('Cannot delete space with active reservations');
         }
         
-        await space.destroy();
+        await espaco.destroy();
         
         res.json({
             success: true,
@@ -157,41 +157,41 @@ module.exports = {
     // GET /api/espacos/:id/disponibilidade
     checkAvailability: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { startDate, endDate } = req.query;
+        const { dataInicio, dataFim } = req.query;
         
-        if (!startDate || !endDate) {
+        if (!dataInicio || !dataFim) {
             throw new ValidationError('Start date and end date are required');
         }
         
-        const space = await db.Space.findByPk(id);
-        if (!space || !space.active) {
+        const espaco = await db.Espaco.findByPk(id);
+        if (!espaco || !espaco.ativo) {
             throw new NotFoundError('Space not found or inactive');
         }
         
-        const conflictingReservations = await db.Reservation.findAll({
+        const conflictingReservations = await db.Reserva.findAll({
             where: {
-                spaceId: id,
-                status: 'confirmed',
+                espacoId: id,
+                status: 'confirmada',
                 [db.Sequelize.Op.or]: [
                     {
-                        startDate: {
-                            [db.Sequelize.Op.between]: [startDate, endDate]
+                        dataInicio: {
+                            [db.Sequelize.Op.between]: [dataInicio, dataFim]
                         }
                     },
                     {
-                        endDate: {
-                            [db.Sequelize.Op.between]: [startDate, endDate]
+                        dataFim: {
+                            [db.Sequelize.Op.between]: [dataInicio, dataFim]
                         }
                     },
                     {
                         [db.Sequelize.Op.and]: [
-                            { startDate: { [db.Sequelize.Op.lte]: startDate } },
-                            { endDate: { [db.Sequelize.Op.gte]: endDate } }
+                            { dataInicio: { [db.Sequelize.Op.lte]: dataInicio } },
+                            { dataFim: { [db.Sequelize.Op.gte]: dataFim } }
                         ]
                     }
                 ]
             },
-            attributes: ['id', 'title', 'startDate', 'endDate']
+            attributes: ['id', 'titulo', 'dataInicio', 'dataFim']
         });
         
         res.json({

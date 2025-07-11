@@ -8,18 +8,18 @@ module.exports = {
     index: asyncHandler(async (req, res) => {
         const where = getUserBasedWhereClause(req);
         
-        const reservations = await db.Reservation.findAll({
+        const reservas = await db.Reserva.findAll({
             where,
             include: [
-                { model: db.User, as: 'user', attributes: ['id', 'name', 'login'] },
-                { model: db.Space, as: 'space', attributes: ['id', 'name', 'location'] }
+                { model: db.Usuario, as: 'usuario', attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, as: 'espaco', attributes: ['id', 'nome', 'localizacao'] }
             ],
-            order: [['startDate', 'DESC']]
+            order: [['dataInicio', 'DESC']]
         });
         
         res.json({
             success: true,
-            data: reservations
+            data: reservas
         });
     }),
     
@@ -27,56 +27,56 @@ module.exports = {
     show: asyncHandler(async (req, res) => {
         const { id } = req.params;
         
-        const reservation = await db.Reservation.findByPk(id, {
+        const reserva = await db.Reserva.findByPk(id, {
             include: [
-                { model: db.User, as: 'user', attributes: ['id', 'name', 'login'] },
-                { model: db.Space, as: 'space', attributes: ['id', 'name', 'location', 'capacity'] }
+                { model: db.Usuario, as: 'usuario', attributes: ['id', 'nome', 'login'] },
+                { model: db.Espaco, as: 'espaco', attributes: ['id', 'nome', 'localizacao', 'capacidade'] }
             ]
         });
         
-        if (!reservation) {
+        if (!reserva) {
             throw new NotFoundError('Reservation not found');
         }
         
         // Security: Ensure user can access this reservation
-        ensureCanAccessResource(reservation, req, 'userId', 'reservation');
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
         
         res.json({
             success: true,
-            data: reservation
+            data: reserva
         });
     }),
     
     // POST /api/reservas
     create: asyncHandler(async (req, res) => {
-        const { title, startDate, endDate, description, spaceId } = req.body;
+        const { titulo, dataInicio, dataFim, descricao, espacoId } = req.body;
         
         // Check if space exists and is active
-        const space = await db.Space.findByPk(spaceId);
-        if (!space || !space.active) {
+        const espaco = await db.Espaco.findByPk(espacoId);
+        if (!espaco || !espaco.ativo) {
             throw new NotFoundError('Space not found or inactive');
         }
         
         // Check for conflicting reservations (both confirmed and pending)
-        const conflictingReservations = await db.Reservation.findAll({
+        const conflictingReservations = await db.Reserva.findAll({
             where: {
-                spaceId,
-                status: { [Op.in]: ['confirmed', 'pending'] },
+                espacoId,
+                status: { [Op.in]: ['confirmada', 'pendente'] },
                 [Op.or]: [
                     {
-                        startDate: {
-                            [Op.between]: [startDate, endDate]
+                        dataInicio: {
+                            [Op.between]: [dataInicio, dataFim]
                         }
                     },
                     {
-                        endDate: {
-                            [Op.between]: [startDate, endDate]
+                        dataFim: {
+                            [Op.between]: [dataInicio, dataFim]
                         }
                     },
                     {
                         [Op.and]: [
-                            { startDate: { [Op.lte]: startDate } },
-                            { endDate: { [Op.gte]: endDate } }
+                            { dataInicio: { [Op.lte]: dataInicio } },
+                            { dataFim: { [Op.gte]: dataFim } }
                         ]
                     }
                 ]
@@ -87,31 +87,31 @@ module.exports = {
             throw new ConflictError('Space is already reserved for this time period');
         }
         
-        const reservation = await db.Reservation.create({
-            title,
-            startDate,
-            endDate,
-            description,
-            spaceId,
-            userId: req.user.id,
-            status: 'pending'
+        const reserva = await db.Reserva.create({
+            titulo,
+            dataInicio,
+            dataFim,
+            descricao,
+            espacoId,
+            usuarioId: req.user.id,
+            status: 'pendente'
         });
             
             // Log reservation creation
             
         res.status(201).json({
             success: true,
-            data: reservation
+            data: reserva
         });
     }),
     
     // PUT /api/reservas/:id
     update: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { title, startDate, endDate, description, status } = req.body;
+        const { titulo, dataInicio, dataFim, descricao, status } = req.body;
         
-        const reservation = await db.Reservation.findByPk(id);
-        if (!reservation) {
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
             throw new NotFoundError('Reservation not found');
         }
         
@@ -121,19 +121,19 @@ module.exports = {
         }
         
         // Security: Ensure user can access this reservation
-        ensureCanAccessResource(reservation, req, 'userId', 'reservation');
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
         
-        await reservation.update({
-            title: title || reservation.title,
-            startDate: startDate || reservation.startDate,
-            endDate: endDate || reservation.endDate,
-            description: description || reservation.description,
-            status: status || reservation.status
+        await reserva.update({
+            titulo: titulo || reserva.titulo,
+            dataInicio: dataInicio || reserva.dataInicio,
+            dataFim: dataFim || reserva.dataFim,
+            descricao: descricao || reserva.descricao,
+            status: status || reserva.status
         });
         
         res.json({
             success: true,
-            data: reservation
+            data: reserva
         });
     }),
     
@@ -141,15 +141,15 @@ module.exports = {
     delete: asyncHandler(async (req, res) => {
         const { id } = req.params;
         
-        const reservation = await db.Reservation.findByPk(id);
-        if (!reservation) {
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
             throw new NotFoundError('Reservation not found');
         }
         
         // Security: Ensure user can access this reservation
-        ensureCanAccessResource(reservation, req, 'userId', 'reservation');
+        ensureCanAccessResource(reserva, req, 'usuarioId', 'reservation');
         
-        await reservation.destroy();
+        await reserva.destroy();
         
         res.json({
             success: true,
@@ -162,8 +162,8 @@ module.exports = {
         const { id } = req.params;
         const { status } = req.body;
         
-        const reservation = await db.Reservation.findByPk(id);
-        if (!reservation) {
+        const reserva = await db.Reserva.findByPk(id);
+        if (!reserva) {
             throw new NotFoundError('Reservation not found');
         }
         
@@ -172,11 +172,11 @@ module.exports = {
             throw new ForbiddenError('Only administrators can change reservation status');
         }
         
-        await reservation.update({ status });
+        await reserva.update({ status });
         
         res.json({
             success: true,
-            data: reservation
+            data: reserva
         });
     })
 };

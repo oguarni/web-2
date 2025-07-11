@@ -3,7 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
+import AdminRoute from './components/AdminRoute'; // Add this new component
 import PublicRoute from './components/PublicRoute';
 import Navigation from './components/Navigation';
 
@@ -21,7 +21,7 @@ function App() {
       <Router>
         <Navigation />
         <Routes>
-          {/* Public Route: For login page */}
+          {/* Public Route: Only non-logged users can see */}
           <Route 
             path="/login" 
             element={
@@ -31,26 +31,27 @@ function App() {
             } 
           />
 
-          {/* Protected Routes Layout for all authenticated users */}
-          <Route path="/" element={<ProtectedRoute />}>
-            {/* Default redirect for authenticated users */}
-            <Route index element={<Navigate to="/dashboard" />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="reservations" element={<Reservations />} />
-            <Route path="spaces" element={<Spaces />} />
+          {/* Protected Routes Layout - Any authenticated user */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/reservations" element={<Reservations />} />
             
-            {/* Nested routes accessible only to Admins */}
+            {/* Admin-only routes */}
             <Route element={<AdminRoute />}>
-              <Route path="users" element={<Users />} />
-              <Route path="amenities" element={<Amenities />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/spaces" element={<Spaces />} />
+              <Route path="/amenities" element={<Amenities />} />
             </Route>
           </Route>
           
-          {/* Catch-all 404 Route */}
+          {/* Root redirect to dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+
+          {/* 404 catch-all route */}
           <Route path="*" element={
             <div className="container mt-5 text-center">
-              <h2>404 - Page Not Found</h2>
-              <p>The resource you are looking for does not exist.</p>
+              <h2>404 - Página Não Encontrada</h2>
+              <p>O recurso que você está procurando não existe.</p>
             </div>
           } />
         </Routes>

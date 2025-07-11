@@ -1,37 +1,28 @@
-'use strict';
-const { Model } = require('sequelize');
+module.exports = (sequelize, Sequelize) => {
+    const Amenity = sequelize.define('amenity', {
+        id: {
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            allowNull: false,
+            primaryKey: true
+        },
+        nome: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            unique: true
+        },
+        descricao: {
+            type: Sequelize.TEXT
+        }
+    });
 
-module.exports = (sequelize, DataTypes) => {
-  class Amenity extends Model {
-    static associate(models) {
-      // Define associations here
-      Amenity.belongsToMany(models.Space, { 
-        through: models.SpaceAmenity, 
-        foreignKey: 'amenityId',
-        otherKey: 'spaceId',
-        as: 'spaces'
-      });
-    }
-  }
-  Amenity.init({
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      allowNull: false,
-      primaryKey: true
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
-    description: {
-      type: DataTypes.TEXT
-    }
-  }, {
-    sequelize,
-    modelName: 'Amenity',
-    tableName: 'amenities'
-  });
-  return Amenity;
+    Amenity.associate = (models) => {
+        Amenity.belongsToMany(models.Espaco, { 
+            through: 'espaco_amenities', 
+            foreignKey: 'amenityId',
+            otherKey: 'espacoId'
+        });
+    };
+
+    return Amenity;
 };

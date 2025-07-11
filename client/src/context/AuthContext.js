@@ -1,34 +1,36 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    setIsAuthenticated(false);
   }, []);
 
-  const fetchUser = useCallback(async () => {
+  const checkAuthStatus = useCallback(async () => {
     if (token) {
       try {
         const response = await authAPI.verifyToken();
         setUser(response.data.user);
+        setIsAuthenticated(true);
       } catch (error) {
-        console.error("Token verification failed, logging out.", error);
         logout();
       }
     }
@@ -36,27 +38,24 @@ export const AuthProvider = ({ children }) => {
   }, [token, logout]);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
-      // Ensure you are accessing the nested data property correctly
       const { token: newToken, user: userData } = response.data;
 
-      if (newToken && userData) {
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
-        setUser(userData);
-        return { success: true };
-      } else {
-        return { success: false, error: 'Login response did not contain token or user data.' };
-      }
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setUser(userData);
+      setIsAuthenticated(true);
+
+      return { success: true };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed.'
+        error: error.response?.data?.message || 'Login falhou.'
       };
     }
   };
@@ -64,20 +63,18 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = () => user?.tipo === 1;
   const isAdminOrGestor = () => user?.tipo === 1 || user?.tipo === 3;
 
-  const value = {
-    user,
-    token,
-    isAuthenticated: !!user, // isAuthenticated is true if user object exists
-    loading,
-    login,
-    logout,
-    isAdmin,
-    isAdminOrGestor,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{
+      user,
+      token,
+      isAuthenticated,
+      loading,
+      login,
+      logout,
+      isAdmin,
+      isAdminOrGestor,
+    }}>
+      {children}
     </AuthContext.Provider>
   );
 };

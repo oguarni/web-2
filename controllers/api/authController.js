@@ -9,27 +9,27 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key';
 module.exports = {
     // POST /api/auth/login
     login: asyncHandler(async (req, res) => {
-        const { login, password } = req.body;
+        const { login, senha } = req.body;
         
-        const user = await db.User.findOne({ 
+        const usuario = await db.Usuario.findOne({ 
             where: { login } 
         });
         
-        if (!user) {
+        if (!usuario) {
             throw new UnauthorizedError('Invalid credentials');
         }
         
         // Compare password with bcrypt
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
         if (!isPasswordValid) {
             throw new UnauthorizedError('Invalid credentials');
         }
         
         // Create JWT payload
         const payload = {
-            id: user.id,
-            name: user.name,
-            tipo: user.type
+            id: usuario.id,
+            nome: usuario.nome,
+            tipo: usuario.tipo
         };
 
         // Sign the token
@@ -39,10 +39,10 @@ module.exports = {
             success: true,
             token,
             user: {
-                id: user.id,
-                name: user.name,
-                login: user.login,
-                type: user.type
+                id: usuario.id,
+                nome: usuario.nome,
+                login: usuario.login,
+                tipo: usuario.tipo
             }
         });
     }),
@@ -53,9 +53,9 @@ module.exports = {
             success: true,
             user: {
                 id: req.user.id,
-                name: req.user.name,
+                nome: req.user.nome,
                 login: req.user.login,
-                type: req.user.tipo
+                tipo: req.user.tipo
             }
         });
     })
