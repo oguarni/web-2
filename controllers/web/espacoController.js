@@ -1,48 +1,62 @@
-const db = require('../../config/db_sequelize');
+// Database will be accessed via req.app.get('db') to avoid module loading issues
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 module.exports = {
     // GET /espacos
     index: asyncHandler(async (req, res) => {
-        const espacos = await db.Espaco.findAll({
+        const database = req.app.get('db');
+        const espacos = await database.Space.findAll({
             include: [{
-                model: db.Amenity,
+                model: database.Amenity,
+                as: 'amenities',
                 through: { attributes: [] }
             }]
         });
         
         res.render('spaces/index', {
             title: 'Espaços',
-            espacos
+            espacos,
+            user: req.session.user,
+            isAuthenticated: true,
+            isAdmin: req.session.user.type === 1,
+            isGestor: req.session.user.type === 3,
+            isAdminOrGestor: req.session.user.type === 1 || req.session.user.type === 3
         });
     }),
 
     // GET /espacos/new
     new: asyncHandler(async (req, res) => {
-        const amenities = await db.Amenity.findAll();
+        const database = req.app.get('db');
+        const amenities = await database.Amenity.findAll();
         res.render('spaces/new', {
             title: 'Novo Espaço',
-            amenities
+            amenities,
+            user: req.session.user,
+            isAuthenticated: true,
+            isAdmin: req.session.user.type === 1,
+            isGestor: req.session.user.type === 3,
+            isAdminOrGestor: req.session.user.type === 1 || req.session.user.type === 3
         });
     }),
 
     // POST /espacos
     create: asyncHandler(async (req, res) => {
-        const { nome, descricao, capacidade, localizacao, equipamentos, ativo, amenities } = req.body;
+        const { name, description, capacity, location, equipment, active, amenities } = req.body;
         
-        if (!nome || !capacidade || !localizacao) {
-            req.flash('error', 'Nome, capacidade e localização são obrigatórios');
-            return res.redirect('/espacos/new');
+        if (!name || !capacity || !location) {
+            req.session.error_msg = 'Nome, capacidade e localização são obrigatórios';
+            return res.redirect('/web/espacos/new');
         }
 
         try {
-            const espaco = await db.Espaco.create({
-                nome,
-                descricao,
-                capacidade: parseInt(capacidade),
-                localizacao,
-                equipamentos,
-                ativo: ativo === 'on'
+            const database = req.app.get('db');
+            const espaco = await database.Space.create({
+                name: name,
+                description: description,
+                capacity: parseInt(capacity),
+                location: location,
+                equipment: equipment,
+                active: active === 'on'
             });
 
             // Associate amenities if provided
@@ -50,80 +64,95 @@ module.exports = {
                 await espaco.setAmenities(amenities);
             }
 
-            req.flash('success', 'Espaço criado com sucesso');
-            res.redirect('/espacos');
+            req.session.success_msg = 'Espaço criado com sucesso';
+            res.redirect('/web/espacos');
         } catch (error) {
-            req.flash('error', 'Erro ao criar espaço: ' + error.message);
-            res.redirect('/espacos/new');
+            req.session.error_msg = 'Erro ao criar espaço: ' + error.message;
+            res.redirect('/web/espacos/new');
         }
     }),
 
     // GET /espacos/:id
     show: asyncHandler(async (req, res) => {
         const { id } = req.params;
+        const database = req.app.get('db');
         
-        const espaco = await db.Espaco.findByPk(id, {
+        const espaco = await database.Space.findByPk(id, {
             include: [{
-                model: db.Amenity,
+                model: database.Amenity,
+                as: 'amenities',
                 through: { attributes: [] }
             }]
         });
         
         if (!espaco) {
-            req.flash('error', 'Espaço não encontrado');
-            return res.redirect('/espacos');
+            req.session.error_msg = 'Espaço não encontrado';
+            return res.redirect('/web/espacos');
         }
         
         res.render('spaces/show', {
             title: 'Detalhes do Espaço',
-            espaco
+            espaco,
+            user: req.session.user,
+            isAuthenticated: true,
+            isAdmin: req.session.user.type === 1,
+            isGestor: req.session.user.type === 3,
+            isAdminOrGestor: req.session.user.type === 1 || req.session.user.type === 3
         });
     }),
 
     // GET /espacos/:id/edit
     edit: asyncHandler(async (req, res) => {
         const { id } = req.params;
+        const database = req.app.get('db');
         
-        const espaco = await db.Espaco.findByPk(id, {
+        const espaco = await database.Space.findByPk(id, {
             include: [{
-                model: db.Amenity,
+                model: database.Amenity,
+                as: 'amenities',
                 through: { attributes: [] }
             }]
         });
         
         if (!espaco) {
-            req.flash('error', 'Espaço não encontrado');
-            return res.redirect('/espacos');
+            req.session.error_msg = 'Espaço não encontrado';
+            return res.redirect('/web/espacos');
         }
-
-        const amenities = await db.Amenity.findAll();
+        
+        const amenities = await database.Amenity.findAll();
         
         res.render('spaces/edit', {
             title: 'Editar Espaço',
             espaco,
-            amenities
+            amenities,
+            user: req.session.user,
+            isAuthenticated: true,
+            isAdmin: req.session.user.type === 1,
+            isGestor: req.session.user.type === 3,
+            isAdminOrGestor: req.session.user.type === 1 || req.session.user.type === 3
         });
     }),
 
     // PUT /espacos/:id
     update: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { nome, descricao, capacidade, localizacao, equipamentos, ativo, amenities } = req.body;
+        const { name, description, capacity, location, equipment, active, amenities } = req.body;
         
         try {
-            const espaco = await db.Espaco.findByPk(id);
+            const database = req.app.get('db');
+            const espaco = await database.Space.findByPk(id);
             if (!espaco) {
-                req.flash('error', 'Espaço não encontrado');
-                return res.redirect('/espacos');
+                req.session.error_msg = 'Espaço não encontrado';
+                return res.redirect('/web/espacos');
             }
 
             await espaco.update({
-                nome,
-                descricao,
-                capacidade: parseInt(capacidade),
-                localizacao,
-                equipamentos,
-                ativo: ativo === 'on'
+                name: name,
+                description: description,
+                capacity: parseInt(capacity),
+                location: location,
+                equipment: equipment,
+                active: active === 'on'
             });
 
             // Update amenities association
@@ -133,11 +162,11 @@ module.exports = {
                 await espaco.setAmenities([]);
             }
 
-            req.flash('success', 'Espaço atualizado com sucesso');
-            res.redirect('/espacos');
+            req.session.success_msg = 'Espaço atualizado com sucesso';
+            res.redirect('/web/espacos');
         } catch (error) {
-            req.flash('error', 'Erro ao atualizar espaço: ' + error.message);
-            res.redirect(`/espacos/${id}/edit`);
+            req.session.error_msg = 'Erro ao atualizar espaço: ' + error.message;
+            res.redirect(`/web/espacos/${id}/edit`);
         }
     }),
 
@@ -146,18 +175,20 @@ module.exports = {
         const { id } = req.params;
         
         try {
-            const espaco = await db.Espaco.findByPk(id);
+            const database = req.app.get('db');
+            const espaco = await database.Space.findByPk(id);
+            
             if (!espaco) {
-                req.flash('error', 'Espaço não encontrado');
-                return res.redirect('/espacos');
+                req.session.error_msg = 'Espaço não encontrado';
+                return res.redirect('/web/espacos');
             }
 
             await espaco.destroy();
-            req.flash('success', 'Espaço removido com sucesso');
-            res.redirect('/espacos');
+            req.session.success_msg = 'Espaço excluído com sucesso';
+            res.redirect('/web/espacos');
         } catch (error) {
-            req.flash('error', 'Erro ao remover espaço: ' + error.message);
-            res.redirect('/espacos');
+            req.session.error_msg = 'Erro ao excluir espaço: ' + error.message;
+            res.redirect('/web/espacos');
         }
     })
 };

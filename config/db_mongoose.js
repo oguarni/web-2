@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const StringCon = {
-    connection: process.env.MONGODB_URI || "mongodb://localhost:27017/reservas_db"
+    connection: process.env.MONGODB_URI || "mongodb://localhost:27017/web2_logs"
 };
 
 // Configuração robusta de conexão com MongoDB com retry exponencial

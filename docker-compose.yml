@@ -1,57 +1,46 @@
 services:
   postgres:
-    image: postgres:14
-    restart: unless-stopped
+    image: postgres:14-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: web2_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d web2_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
-  mongodb:
-    image: mongo:6
-    restart: unless-stopped
+  mongo:
+    image: mongo:6-focal
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
 
   app:
     build: .
-    restart: unless-stopped
-    container_name: app_server
     ports:
-      # Apenas a porta 8081 é exposta. Ela servirá a API, o MVC e o React.
-      - "8081:8081"
+      - "3000:8081"
     depends_on:
-      postgres:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-    env_file:
-      - .env # Garanta que seu .env tem DB_HOST=postgres
-    volumes:
-      # Monta o código fonte para refletir alterações (exceto node_modules)
-      - .:/usr/src/app
-      # Monta o build do React para ser servido pelo Express
-      - ./client/build:/usr/src/app/client/build
-      # Isola o node_modules dentro do container para evitar conflitos
-      - node_modules_data:/usr/src/app/node_modules
-
-# O serviço 'client' foi removido, pois o 'app' agora serve a aplicação React.
+      - postgres
+      - mongo
+    environment:
+      - DATABASE_URL=postgresql://postgres:1234@postgres:5432/web2_db
+      - MONGODB_URI=mongodb://mongo:27017/web2_logs
+      - JWT_SECRET=Xkj8$9mP#vQ2@hL5^zN7&wR3*sT1!aB6%yC4+dE8~fG9
+      - NODE_ENV=development
+      - POSTGRES_DB=web2_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - PORT=8081
+    command: npm start
 
 volumes:
   postgres_data:

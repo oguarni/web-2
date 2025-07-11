@@ -1,6 +1,19 @@
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+    process.exit(1);
+});
+
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const flash = require('connect-flash');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const cors = require('cors'); // Adicionado
@@ -15,6 +28,9 @@ const db = require('./config/db_sequelize');
 require('./config/db_mongoose');
 
 const app = express(); // Apenas uma declaração
+
+// Make database available to all routes
+app.set('db', db);
 
 // --- Middlewares Principais ---
 
@@ -100,11 +116,39 @@ app.use(session({
     cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
+// 6. Configuração do flash para mensagens
+app.use(flash());
+
 // --- Configuração de Views e Arquivos Estáticos ---
 
 // View Engine (Handlebars)
+const hbs = require('hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
+
+// Register handlebars partials and layouts
+hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
+hbs.localsAsTemplateData(app);
+
+// Register handlebars helpers
+hbs.registerHelper('tipoUsuario', function(tipo) {
+    switch(tipo) {
+        case 1: return 'Admin';
+        case 2: return 'Usuário';
+        case 3: return 'Gestor';
+        default: return 'Usuário';
+    }
+});
+
+hbs.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+hbs.registerHelper('formatDateTime', function(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
+});
 
 // Servir arquivos estáticos (CSS, imagens) para a aplicação MVC
 app.use('/public', express.static(path.join(__dirname, 'public')));
@@ -123,12 +167,36 @@ app.use('/web', webRoutes);
 // Rota para a documentação da API (Swagger)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Redirects for legacy routes
+app.use('/reservas', (req, res) => {
+    res.redirect('/web/reservas' + req.url);
+});
+
+app.use('/espacos', (req, res) => {
+    res.redirect('/web/espacos' + req.url);
+});
+
+app.use('/usuarios', (req, res) => {
+    res.redirect('/web/usuarios' + req.url);
+});
+
 // Rota Catch-all para o React
 app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/web')) {
         return next();
     }
     res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+    });
 });
 
 // --- Tratamento de Erros ---

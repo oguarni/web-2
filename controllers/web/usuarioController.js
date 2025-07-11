@@ -1,12 +1,12 @@
-const db = require('../../config/db_sequelize');
-const { asyncHandler, NotFoundError, ConflictError, ValidationError } = require('../../middlewares/errorHandler');
+const { asyncHandler } = require('../../middlewares/errorHandler');
 const bcrypt = require('bcryptjs');
 
 module.exports = {
     // GET /usuarios
     index: asyncHandler(async (req, res) => {
-        const usuarios = await db.Usuario.findAll({
-            attributes: ['id', 'nome', 'login', 'tipo', 'createdAt', 'updatedAt']
+        const database = req.app.get('db');
+        const usuarios = await database.User.findAll({
+            attributes: ['id', 'name', 'login', 'type', 'createdAt', 'updatedAt']
         });
         
         res.render('users/index', {
@@ -24,31 +24,32 @@ module.exports = {
 
     // POST /usuarios
     create: asyncHandler(async (req, res) => {
-        const { nome, login, senha, tipo } = req.body;
+        const { name, login, password, type } = req.body;
         
-        if (!nome || !login || !senha) {
+        if (!name || !login || !password) {
             req.flash('error', 'Nome, login e senha são obrigatórios');
             return res.redirect('/usuarios/new');
         }
 
         try {
-            const existingUser = await db.Usuario.findOne({ where: { login } });
+            const database = req.app.get('db');
+            const existingUser = await database.User.findOne({ where: { login } });
             if (existingUser) {
                 req.flash('error', 'Login já existe');
                 return res.redirect('/usuarios/new');
             }
 
-            const hashedPassword = await bcrypt.hash(senha, 10);
+            const hashedPassword = await bcrypt.hash(password, 10);
             
-            await db.Usuario.create({
-                nome,
+            await database.User.create({
+                name,
                 login,
-                senha: hashedPassword,
-                tipo: tipo || 2
+                password: hashedPassword,
+                type: type || 2
             });
 
             req.flash('success', 'Usuário criado com sucesso');
-            res.redirect('/usuarios');
+            res.redirect('/web/usuarios');
         } catch (error) {
             req.flash('error', 'Erro ao criar usuário: ' + error.message);
             res.redirect('/usuarios/new');
@@ -58,14 +59,15 @@ module.exports = {
     // GET /usuarios/:id
     show: asyncHandler(async (req, res) => {
         const { id } = req.params;
+        const database = req.app.get('db');
         
-        const usuario = await db.Usuario.findByPk(id, {
-            attributes: ['id', 'nome', 'login', 'tipo', 'createdAt', 'updatedAt']
+        const usuario = await database.User.findByPk(id, {
+            attributes: ['id', 'name', 'login', 'type', 'createdAt', 'updatedAt']
         });
         
         if (!usuario) {
             req.flash('error', 'Usuário não encontrado');
-            return res.redirect('/usuarios');
+            return res.redirect('/web/usuarios');
         }
         
         res.render('users/show', {
@@ -77,14 +79,15 @@ module.exports = {
     // GET /usuarios/:id/edit
     edit: asyncHandler(async (req, res) => {
         const { id } = req.params;
+        const database = req.app.get('db');
         
-        const usuario = await db.Usuario.findByPk(id, {
-            attributes: ['id', 'nome', 'login', 'tipo']
+        const usuario = await database.User.findByPk(id, {
+            attributes: ['id', 'name', 'login', 'type']
         });
         
         if (!usuario) {
             req.flash('error', 'Usuário não encontrado');
-            return res.redirect('/usuarios');
+            return res.redirect('/web/usuarios');
         }
         
         res.render('users/edit', {
@@ -96,24 +99,25 @@ module.exports = {
     // PUT /usuarios/:id
     update: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { nome, login, senha, tipo } = req.body;
+        const { name, login, password, type } = req.body;
         
         try {
-            const usuario = await db.Usuario.findByPk(id);
+            const database = req.app.get('db');
+            const usuario = await database.User.findByPk(id);
             if (!usuario) {
                 req.flash('error', 'Usuário não encontrado');
-                return res.redirect('/usuarios');
+                return res.redirect('/web/usuarios');
             }
 
-            const updateData = { nome, login, tipo };
+            const updateData = { name, login, type };
             
-            if (senha && senha.trim() !== '') {
-                updateData.senha = await bcrypt.hash(senha, 10);
+            if (password && password.trim() !== '') {
+                updateData.password = await bcrypt.hash(password, 10);
             }
 
             await usuario.update(updateData);
             req.flash('success', 'Usuário atualizado com sucesso');
-            res.redirect('/usuarios');
+            res.redirect('/web/usuarios');
         } catch (error) {
             req.flash('error', 'Erro ao atualizar usuário: ' + error.message);
             res.redirect(`/usuarios/${id}/edit`);
@@ -125,18 +129,19 @@ module.exports = {
         const { id } = req.params;
         
         try {
-            const usuario = await db.Usuario.findByPk(id);
+            const database = req.app.get('db');
+            const usuario = await database.User.findByPk(id);
             if (!usuario) {
                 req.flash('error', 'Usuário não encontrado');
-                return res.redirect('/usuarios');
+                return res.redirect('/web/usuarios');
             }
 
             await usuario.destroy();
             req.flash('success', 'Usuário removido com sucesso');
-            res.redirect('/usuarios');
+            res.redirect('/web/usuarios');
         } catch (error) {
             req.flash('error', 'Erro ao remover usuário: ' + error.message);
-            res.redirect('/usuarios');
+            res.redirect('/web/usuarios');
         }
     })
 };
