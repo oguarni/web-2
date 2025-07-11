@@ -45,7 +45,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     active: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
+      defaultValue: true,
+      indexes: [{ fields: ['active'] }]
     }
   }, {
     sequelize,

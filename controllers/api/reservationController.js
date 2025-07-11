@@ -2,6 +2,7 @@ const db = require('../../config/db_sequelize');
 const { Op } = require('sequelize');
 const { asyncHandler, NotFoundError, ConflictError, ValidationError, ForbiddenError } = require('../../middlewares/errorHandler');
 const { getUserBasedWhereClause, ensureCanAccessResource, isAdmin } = require('../../middlewares/authHelpers');
+const Log = require('../../models/noSql/log');
 
 module.exports = {
     // GET /api/reservas
@@ -97,7 +98,14 @@ module.exports = {
             status: 'pending'
         });
             
-            // Log reservation creation
+        // Log reservation creation
+        const log = new Log({
+            usuarioId: req.user.id,
+            acao: 'CREATE_RESERVATION',
+            ip: req.ip,
+            detalhes: { reservationId: reservation.id }
+        });
+        await log.save();
             
         res.status(201).json({
             success: true,

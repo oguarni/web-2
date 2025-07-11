@@ -134,8 +134,8 @@ module.exports = {
      *               $ref: '#/components/schemas/ErrorResponse'
      */
     store: asyncHandler(async (req, res) => {
-        const { nome, descricao } = req.body;
-        const newAmenity = await db.Amenity.create({ nome, descricao });
+        const { name, description } = req.body;
+        const newAmenity = await db.Amenity.create({ name, description });
         res.status(201).json({ success: true, data: newAmenity });
     }),
 
@@ -200,12 +200,12 @@ module.exports = {
      */
     update: asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { nome, descricao } = req.body;
+        const { name, description } = req.body;
         const amenity = await db.Amenity.findByPk(id);
         if (!amenity) {
             throw new NotFoundError('Amenity not found');
         }
-        await amenity.update({ nome, descricao });
+        await amenity.update({ name, description });
         res.json({ success: true, data: amenity });
     }),
 

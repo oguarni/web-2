@@ -38,7 +38,8 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 2, // 1 = Admin, 2 = Regular User, 3 = Manager
       validate: {
         isIn: [[1, 2, 3]]
-      }
+      },
+      indexes: [{ fields: ['type'] }]
     }
   }, {
     sequelize,

@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 // Import middlewares
@@ -8,24 +9,41 @@ const {
     validateUser, 
     validateSpace, 
     validateReservation, 
+    validateAmenity,
     validateLog 
 } = require('../middlewares/validation');
 
 // Import API controllers
 const authController = require('../controllers/api/authController');
-const userController = require('../controllers/api/usuarioController');
-const reservationController = require('../controllers/api/reservaController');
-const spaceController = require('../controllers/api/espacoController');
+const userController = require('../controllers/api/userController');
+const reservationController = require('../controllers/api/reservationController');
+const spaceController = require('../controllers/api/spaceController');
 const logController = require('../controllers/api/logController');
 const amenityController = require('../controllers/api/amenityController');
-const spaceAmenityController = require('../controllers/api/espacoAmenityController');
+const spaceAmenityController = require('../controllers/api/spaceAmenityController');
+
+// Rate limiting
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 requests per windowMs
+    message: 'Too many login attempts from this IP, please try again after 15 minutes'
+});
+
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
 
 // =================================================================
 // PUBLIC ROUTES (Do not require token)
 // =================================================================
 
+// Apply general rate limiting to all API routes
+router.use(generalLimiter);
+
 // Auth routes
-router.post('/auth/login', validateAuth.login, authController.login);
+router.post('/auth/login', authLimiter, validateAuth.login, authController.login);
 
 // User registration route
 router.post('/usuarios', validateUser.create, userController.create);
@@ -72,14 +90,14 @@ router.get('/espacos/:id/disponibilidade', checkRole(['admin', 'manager', 'clien
 
 // Amenity routes (Admin, Manager: full CRUD, Client: read-only)
 router.get('/amenities', checkRole(['admin', 'manager', 'client']), amenityController.index);
-router.post('/amenities', checkRole(['admin', 'manager']), amenityController.store);
-router.get('/amenities/:id', checkRole(['admin', 'manager', 'client']), amenityController.show);
-router.put('/amenities/:id', checkRole(['admin', 'manager']), amenityController.update);
-router.delete('/amenities/:id', checkRole(['admin', 'manager']), amenityController.destroy);
+router.post('/amenities', checkRole(['admin', 'manager']), validateAmenity.create, amenityController.store);
+router.get('/amenities/:id', checkRole(['admin', 'manager', 'client']), validateAmenity.idParam, amenityController.show);
+router.put('/amenities/:id', checkRole(['admin', 'manager']), validateAmenity.idParam, validateAmenity.update, amenityController.update);
+router.delete('/amenities/:id', checkRole(['admin', 'manager']), validateAmenity.idParam, amenityController.destroy);
 
 // Space-Amenity relationship routes (Admin, Manager: full CRUD)
-router.post('/espacos/:spaceId/amenities', checkRole(['admin', 'manager']), spaceAmenityController.associateAmenity);
-router.delete('/espacos/:spaceId/amenities/:amenityId', checkRole(['admin', 'manager']), spaceAmenityController.disassociateAmenity);
+router.post('/spaces/:spaceId/amenities', checkRole(['admin', 'manager']), spaceAmenityController.associateAmenity);
+router.delete('/spaces/:spaceId/amenities/:amenityId', checkRole(['admin', 'manager']), spaceAmenityController.disassociateAmenity);
 
 // Log routes (Admin only)
 router.get('/logs/stats', requireAdmin, validateLog.query, logController.getStats);

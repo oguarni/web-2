@@ -140,24 +140,24 @@ const PORT = process.env.PORT || 8081;
 
 const createDefaultUsers = async () => {
     try {
-        const adminExists = await db.Usuario.findOne({ where: { login: 'admin' } });
+        const adminExists = await db.User.findOne({ where: { login: 'admin' } });
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
-            await db.Usuario.create({ nome: 'Administrador', login: 'admin', senha: hashedPassword, tipo: 1 });
+            await db.User.create({ name: 'Administrador', login: 'admin', password: hashedPassword, type: 1 });
             console.log('--> Usuário "admin" criado com sucesso.');
         }
 
-        const userExists = await db.Usuario.findOne({ where: { login: 'usuario' } });
+        const userExists = await db.User.findOne({ where: { login: 'usuario' } });
         if (!userExists) {
             const hashedPassword = await bcrypt.hash('usuario123', 10);
-            await db.Usuario.create({ nome: 'Usuário Comum', login: 'usuario', senha: hashedPassword, tipo: 2 });
+            await db.User.create({ name: 'Usuário Comum', login: 'usuario', password: hashedPassword, type: 2 });
             console.log('--> Usuário "usuario" criado com sucesso.');
         }
 
-        const gestorExists = await db.Usuario.findOne({ where: { login: 'gestor' } });
+        const gestorExists = await db.User.findOne({ where: { login: 'gestor' } });
         if (!gestorExists) {
             const hashedPassword = await bcrypt.hash('gestor123', 10);
-            await db.Usuario.create({ nome: 'Gestor de Espaços', login: 'gestor', senha: hashedPassword, tipo: 3 });
+            await db.User.create({ name: 'Gestor de Espaços', login: 'gestor', password: hashedPassword, type: 3 });
             console.log('--> Usuário "gestor" criado com sucesso.');
         }
     } catch (error) {

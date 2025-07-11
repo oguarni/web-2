@@ -42,21 +42,20 @@ module.exports = {
             throw new ConflictError('Login already exists');
         }
         
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
         const user = await db.User.create({
             name,
             login,
-            password,
+            password: hashedPassword,
             type: type || 2 // Default to normal user
         });
         
+        const { password: _, ...userData } = user.get({ plain: true });
+
         res.status(201).json({
             success: true,
-            data: {
-                id: user.id,
-                name: user.name,
-                login: user.login,
-                type: user.type
-            }
+            data: userData
         });
     }),
     

@@ -3,13 +3,15 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { asyncHandler, UnauthorizedError } = require('../../middlewares/errorHandler');
 
-// Ensure JWT_SECRET is set in your environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('FATAL_ERROR: JWT_SECRET is not defined in environment variables.');
+}
 
 module.exports = {
     // POST /api/auth/login
     login: asyncHandler(async (req, res) => {
-        const { login, password } = req.body;
+        const { login, senha } = req.body;
         
         const user = await db.User.findOne({ 
             where: { login } 
@@ -20,7 +22,7 @@ module.exports = {
         }
         
         // Compare password with bcrypt
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(senha, user.password);
         if (!isPasswordValid) {
             throw new UnauthorizedError('Invalid credentials');
         }

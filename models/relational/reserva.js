@@ -25,26 +25,32 @@ module.exports = (sequelize, DataTypes) => {
     },
     title: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      field: 'titulo'
     },
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.TEXT,
+      field: 'descricao'
     },
     startDate: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: false,
+      field: 'data_inicio'
     },
     endDate: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: false,
+      field: 'data_fim'
     },
     spaceId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      field: 'espaco_id'
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      field: 'usuario_id'
     },
     status: {
       type: DataTypes.STRING,
@@ -54,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Reservation',
-    tableName: 'reservations'
+    tableName: 'reservas'
   });
   return Reservation;
 };

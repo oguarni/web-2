@@ -9,7 +9,7 @@ const patterns = {
     name: Joi.string().min(2).max(100).trim(),
     login: Joi.string().min(3).max(50).alphanum().trim(),
     dateTime: Joi.date().iso(),
-    userType: Joi.number().integer().valid(1, 2), // 1 = admin, 2 = user
+    userType: Joi.number().integer().valid(1, 2, 3), // 1 = admin, 2 = user, 3 = manager
     status: Joi.string().valid('pendente', 'confirmada', 'cancelada')
 };
 
@@ -40,29 +40,29 @@ const userSchemas = {
 // Space schemas
 const spaceSchemas = {
     create: Joi.object({
-        nome: patterns.name.required(),
-        descricao: Joi.string().max(500).allow('').optional(),
-        capacidade: Joi.number().integer().min(1).max(1000).required(),
-        localizacao: Joi.string().min(2).max(200).trim().required(),
-        equipamentos: Joi.string().max(1000).allow('').optional()
+        name: patterns.name.required(),
+        description: Joi.string().max(500).allow('').optional(),
+        capacity: Joi.number().integer().min(1).max(1000).required(),
+        location: Joi.string().min(2).max(200).trim().required(),
+        equipment: Joi.string().max(1000).allow('').optional()
     }),
     update: Joi.object({
-        nome: patterns.name,
-        descricao: Joi.string().max(500).allow(''),
-        capacidade: Joi.number().integer().min(1).max(1000),
-        localizacao: Joi.string().min(2).max(200).trim(),
-        equipamentos: Joi.string().max(1000).allow(''),
-        ativo: Joi.boolean()
+        name: patterns.name,
+        description: Joi.string().max(500).allow(''),
+        capacity: Joi.number().integer().min(1).max(1000),
+        location: Joi.string().min(2).max(200).trim(),
+        equipment: Joi.string().max(1000).allow(''),
+        active: Joi.boolean()
     }).min(1),
     availability: Joi.object({
-        dataInicio: patterns.dateTime.required(),
-        dataFim: patterns.dateTime.required()
+        startDate: patterns.dateTime.required(),
+        endDate: patterns.dateTime.required()
     }).custom((value, helpers) => {
-        const { dataInicio, dataFim } = value;
-        if (new Date(dataInicio) >= new Date(dataFim)) {
+        const { startDate, endDate } = value;
+        if (new Date(startDate) >= new Date(endDate)) {
             return helpers.error('custom.dateRange');
         }
-        if (new Date(dataInicio) < new Date()) {
+        if (new Date(startDate) < new Date()) {
             return helpers.error('custom.pastDate');
         }
         return value;
@@ -75,15 +75,15 @@ const spaceSchemas = {
 // Reservation schemas
 const reservationSchemas = {
     create: Joi.object({
-        titulo: patterns.name.required(),
-        descricao: Joi.string().max(500).allow('').optional(),
-        dataInicio: patterns.dateTime.required(),
-        dataFim: patterns.dateTime.required(),
-        espacoId: patterns.objectId.required()
+        title: patterns.name.required(),
+        description: Joi.string().max(500).allow('').optional(),
+        startDate: patterns.dateTime.required(),
+        endDate: patterns.dateTime.required(),
+        spaceId: patterns.objectId.required()
     }).custom((value, helpers) => {
-        const { dataInicio, dataFim } = value;
-        const start = new Date(dataInicio);
-        const end = new Date(dataFim);
+        const { startDate, endDate } = value;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
         const now = new Date();
         
         if (start >= end) {
@@ -111,17 +111,17 @@ const reservationSchemas = {
         'custom.tooLong': 'Reservation cannot exceed 24 hours'
     }),
     update: Joi.object({
-        titulo: patterns.name,
-        descricao: Joi.string().max(500).allow(''),
-        dataInicio: patterns.dateTime,
-        dataFim: patterns.dateTime,
-        espacoId: patterns.objectId,
+        title: patterns.name,
+        description: Joi.string().max(500).allow(''),
+        startDate: patterns.dateTime,
+        endDate: patterns.dateTime,
+        spaceId: patterns.objectId,
         status: patterns.status
     }).min(1).custom((value, helpers) => {
-        const { dataInicio, dataFim } = value;
-        if (dataInicio && dataFim) {
-            const start = new Date(dataInicio);
-            const end = new Date(dataFim);
+        const { startDate, endDate } = value;
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
             const now = new Date();
             
             if (start >= end) {
@@ -152,6 +152,18 @@ const reservationSchemas = {
     updateStatus: Joi.object({
         status: patterns.status.required()
     })
+};
+
+// Amenity schemas
+const amenitySchemas = {
+    create: Joi.object({
+        name: patterns.name.required(),
+        description: Joi.string().max(500).allow('').optional()
+    }),
+    update: Joi.object({
+        name: patterns.name,
+        description: Joi.string().max(500).allow('')
+    }).min(1) // At least one field must be provided
 };
 
 // Log schemas
@@ -278,6 +290,12 @@ const validateReservation = {
     idParam: validate(querySchemas.idParam, 'params')
 };
 
+const validateAmenity = {
+    create: validate(amenitySchemas.create),
+    update: validate(amenitySchemas.update),
+    idParam: validate(querySchemas.idParam, 'params')
+};
+
 const validateLog = {
     create: validate(logSchemas.create),
     query: validate(logSchemas.query, 'query'),
@@ -293,6 +311,7 @@ module.exports = {
     validateUser,
     validateSpace,
     validateReservation,
+    validateAmenity,
     validateLog,
     validatePagination,
     patterns,
@@ -300,6 +319,7 @@ module.exports = {
     userSchemas,
     spaceSchemas,
     reservationSchemas,
+    amenitySchemas,
     logSchemas,
     querySchemas
 };

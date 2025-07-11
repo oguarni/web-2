@@ -1,8 +1,10 @@
 const jwt = require('jsonwebtoken');
 const { UnauthorizedError, ForbiddenError } = require('./errorHandler');
 
-// Ensure JWT_SECRET is set in your environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your_default_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('FATAL_ERROR: JWT_SECRET is not defined in environment variables.');
+}
 
 // Middleware to validate JWT
 const validateToken = (req, res, next) => {
