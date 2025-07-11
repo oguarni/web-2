@@ -14,7 +14,7 @@ const Users = () => {
     nome: '',
     email: '',
     password: '',
-    role: 'user'
+    tipo: 2
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -66,7 +66,7 @@ const Users = () => {
     setShowModal(false);
     setShowDeleteModal(false);
     setCurrentUser(null);
-    setFormData({ nome: '', email: '', password: '', role: 'user' });
+    setFormData({ nome: '', email: '', password: '', tipo: 2 });
     setError('');
     setIsNewUser(false);
   };
@@ -74,7 +74,7 @@ const Users = () => {
   const handleNew = () => {
     clearAlerts();
     setCurrentUser(null);
-    setFormData({ nome: '', email: '', password: '', role: 'user' });
+    setFormData({ nome: '', email: '', password: '', tipo: 2 });
     setIsNewUser(true);
     setShowModal(true);
   };
@@ -86,7 +86,7 @@ const Users = () => {
       nome: user.nome,
       email: user.email,
       password: '', // Don't populate password on edit
-      role: user.role
+      tipo: user.tipo
     });
     setIsNewUser(false);
     setShowModal(true);
@@ -99,7 +99,8 @@ const Users = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.name === 'tipo' ? parseInt(e.target.value) : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   // CRUD operations
@@ -207,8 +208,8 @@ const Users = () => {
                 <td>{user.nome}</td>
                 <td>{user.email}</td>
                 <td>
-                  <Badge bg={user.role === 'admin' ? 'success' : user.role === 'gestor' ? 'primary' : 'secondary'}>
-                    {user.role}
+                  <Badge bg={user.tipo === 1 ? 'success' : user.tipo === 3 ? 'primary' : 'secondary'}>
+                    {user.tipo === 1 ? 'Admin' : user.tipo === 3 ? 'Gestor' : 'User'}
                   </Badge>
                 </td>
                 <td>
@@ -286,13 +287,13 @@ const Users = () => {
             <Form.Group className="mb-3">
               <Form.Label>Tipo *</Form.Label>
               <Form.Select
-                name="role"
-                value={formData.role}
+                name="tipo"
+                value={formData.tipo}
                 onChange={handleChange}
               >
-                <option value="user">User</option>
-                <option value="gestor">Gestor</option>
-                <option value="admin">Admin</option>
+                <option value={2}>User</option>
+                <option value={3}>Gestor</option>
+                <option value={1}>Admin</option>
               </Form.Select>
             </Form.Group>
           </Modal.Body>
