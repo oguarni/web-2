@@ -1,42 +1,56 @@
-module.exports = (sequelize, Sequelize) => {
-    const Espaco = sequelize.define('espaco', {
-        id: {
-            type: Sequelize.INTEGER,
-            autoIncrement: true, 
-            allowNull: false, 
-            primaryKey: true
-        },
-        nome: {
-            type: Sequelize.STRING, 
-            allowNull: false
-        },
-        descricao: {
-            type: Sequelize.TEXT
-        },
-        capacidade: {
-            type: Sequelize.INTEGER,
-            allowNull: false
-        },
-        localizacao: {
-            type: Sequelize.STRING,
-            allowNull: false
-        },
-        equipamentos: {
-            type: Sequelize.TEXT // JSON string of available equipment
-        },
-        ativo: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: true
-        }
-    });
+'use strict';
+const { Model } = require('sequelize');
 
-    Espaco.associate = (models) => {
-        Espaco.belongsToMany(models.Amenity, { 
-            through: 'espaco_amenities', 
-            foreignKey: 'espacoId',
-            otherKey: 'amenityId'
-        });
-    };
-
-    return Espaco;
+module.exports = (sequelize, DataTypes) => {
+  class Space extends Model {
+    static associate(models) {
+      // Define associations here
+      Space.hasMany(models.Reservation, {
+        foreignKey: 'spaceId',
+        as: 'reservations',
+        onDelete: 'RESTRICT'
+      });
+      Space.belongsToMany(models.Amenity, { 
+        through: models.SpaceAmenity, 
+        foreignKey: 'spaceId',
+        otherKey: 'amenityId',
+        as: 'amenities'
+      });
+    }
+  }
+  Space.init({
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true, 
+      allowNull: false, 
+      primaryKey: true
+    },
+    name: {
+      type: DataTypes.STRING, 
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.TEXT
+    },
+    capacity: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    location: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    equipment: {
+      type: DataTypes.TEXT // JSON string of available equipment
+    },
+    active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
+  }, {
+    sequelize,
+    modelName: 'Space',
+    tableName: 'spaces'
+  });
+  return Space;
 };

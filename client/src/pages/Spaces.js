@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Modal, Form, Alert, Badge, Spinner } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { spacesAPI, reservationsAPI } from '../services/api';
-import { useNavigate } from 'react-router-dom';
-
 const Spaces = () => {
   const { isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [spaces, setSpaces] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
@@ -50,6 +47,8 @@ const Spaces = () => {
       setSpaces(response.data.data);
     } catch (error) {
       setError('Erro ao carregar espaços');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,6 +57,7 @@ const Spaces = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSubmitting(true);
 
     try {
       const submitData = {
@@ -79,6 +79,8 @@ const Spaces = () => {
       fetchSpaces();
     } catch (error) {
       setError(error.response?.data?.message || 'Erro ao salvar espaço');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -145,6 +147,7 @@ const Spaces = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSubmitting(true);
 
     const startDate = new Date(reservationData.dataInicio);
     const endDate = new Date(reservationData.dataFim);
@@ -152,11 +155,13 @@ const Spaces = () => {
 
     if (startDate <= now) {
       setError('A data de início deve ser no futuro.');
+      setSubmitting(false);
       return;
     }
 
     if (endDate <= startDate) {
       setError('A data de fim deve ser posterior à data de início.');
+      setSubmitting(false);
       return;
     }
 
@@ -173,6 +178,8 @@ const Spaces = () => {
       setSelectedSpace(null);
     } catch (error) {
       setError(error.response?.data?.message || 'Erro ao criar reserva');
+    } finally {
+      setSubmitting(false);
     }
   };
 
