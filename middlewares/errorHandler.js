@@ -64,12 +64,40 @@ const errorHandler = (err, req, res, next) => {
 
     // Sequelize unique constraint error
     if (err.name === 'SequelizeUniqueConstraintError') {
-        const message = 'Duplicate value entered';
-        const details = err.errors.map(error => ({
-            field: error.path,
-            message: `${error.path} must be unique`,
-            value: error.value
-        }));
+        let message = 'Duplicate value entered';
+        const details = err.errors.map(error => {
+            let fieldMessage = `${error.path} must be unique`;
+            
+            // Provide specific user-friendly messages for common fields
+            switch(error.path) {
+                case 'email':
+                    fieldMessage = 'This email is already in use';
+                    break;
+                case 'login':
+                    fieldMessage = 'This login is already in use';
+                    break;
+                case 'nome':
+                    fieldMessage = 'This name is already in use';
+                    break;
+                case 'cpf':
+                    fieldMessage = 'This CPF is already in use';
+                    break;
+                default:
+                    fieldMessage = `This ${error.path} is already in use`;
+            }
+            
+            return {
+                field: error.path,
+                message: fieldMessage,
+                value: error.value
+            };
+        });
+        
+        // Set a more specific message if it's a single field error
+        if (details.length === 1) {
+            message = details[0].message;
+        }
+        
         error = new ConflictError(message);
         error.details = details;
     }

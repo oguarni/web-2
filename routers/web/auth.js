@@ -4,11 +4,11 @@ const authController = require('../../controllers/web/authController');
 const { redirectIfAuthenticated, requireAuth } = require('../../middlewares/webAuth');
 
 // Login routes
-router.get('/login', redirectIfAuthenticated, authController.loginForm);
+router.get('/login', redirectIfAuthenticated, authController.showLoginForm);
 router.post('/login', redirectIfAuthenticated, authController.login);
 
 // Register routes
-router.get('/register', redirectIfAuthenticated, authController.registerForm);
+router.get('/register', redirectIfAuthenticated, authController.showRegisterForm);
 router.post('/register', redirectIfAuthenticated, authController.register);
 
 // Logout route

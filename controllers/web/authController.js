@@ -21,44 +21,44 @@ exports.login = async (req, res) => {
     // Validação para garantir que os campos não estão vazios
     if (!login || !senha) {
         req.session.error_msg = 'Por favor, preencha todos os campos.';
-        return res.redirect('/login');
+        return res.redirect('/web/login');
     }
 
     try {
-        // 1. Encontra o utilizador pelo login no banco de dados
-        const usuario = await db.Usuario.findOne({ where: { login: login } });
+        // Get database from app context to avoid module loading issues
+        const database = req.app.get('db');
+        const user = await database.User.findOne({ 
+            where: { login } 
+        });
 
-        // 2. Verifica se o utilizador foi encontrado
-        if (!usuario) {
-            // Mensagem de erro genérica por segurança
+        // Verifica se o utilizador foi encontrado
+        if (!user) {
             req.session.error_msg = 'Credenciais inválidas. Verifique o seu login e senha.';
-            return res.redirect('/login');
+            return res.redirect('/web/login');
         }
 
-        // 3. Compara a senha fornecida com a senha "hashada" guardada
-        // Esta é a etapa crucial. Usamos 'await' porque bcrypt.compare é uma função assíncrona.
-        const isMatch = await bcrypt.compare(senha, usuario.senha);
-
-        // 4. Verifica se as senhas correspondem
-        if (isMatch) {
-            // Sucesso! A senha está correta. Criamos a sessão do utilizador.
-            req.session.user = {
-                id: usuario.id,
-                nome: usuario.nome,
-                tipo: usuario.tipo
-            };
-            // Redireciona para a página principal após o login
-            return res.redirect('/');
-        } else {
-            // Falha. A senha está incorreta.
+        // Compara a senha fornecida com a senha "hashada" guardada
+        const isPasswordValid = await bcrypt.compare(senha, user.password);
+        
+        if (!isPasswordValid) {
             req.session.error_msg = 'Credenciais inválidas. Verifique o seu login e senha.';
-            return res.redirect('/login');
+            return res.redirect('/web/login');
         }
+
+        // Sucesso! A senha está correta. Criamos a sessão do utilizador.
+        req.session.user = {
+            id: user.id,
+            name: user.name,
+            type: user.type
+        };
+        
+        // Redireciona para a página principal após o login
+        return res.redirect('/web/dashboard');
 
     } catch (error) {
         console.error('Erro no processo de login:', error);
         req.session.error_msg = 'Ocorreu um erro interno. Tente novamente mais tarde.';
-        return res.redirect('/login');
+        return res.redirect('/web/login');
     }
 };
 
@@ -79,21 +79,21 @@ exports.register = async (req, res) => {
     }
 
     try {
-        const userExists = await db.Usuario.findOne({ where: { login: login } });
+        const userExists = await db.User.findOne({ where: { login: login } });
         if (userExists) {
             return res.render('auth/register', { error_msg: 'Este login já está em uso.', nome, login });
         }
 
         const hashedPassword = await bcrypt.hash(senha, 10);
-        await db.Usuario.create({
-            nome,
+        await db.User.create({
+            name: nome,
             login,
-            senha: hashedPassword,
-            tipo: 2 // Tipo 2 (Utilizador Comum) por defeito
+            password: hashedPassword,
+            type: 2 // Tipo 2 (Utilizador Comum) por defeito
         });
 
         req.session.success_msg = 'Registo realizado com sucesso! Já pode fazer login.';
-        res.redirect('/login');
+        res.redirect('/web/login');
 
     } catch (error) {
         console.error('Erro no registo:', error);
@@ -110,6 +110,30 @@ exports.logout = (req, res) => {
         }
         // Limpa o cookie para garantir um logout completo
         res.clearCookie('connect.sid');
-        res.redirect('/login');
+        res.redirect('/web/login');
+    });
+};
+
+// Controller para exibir o dashboard
+exports.dashboard = (req, res) => {
+    const user = req.session.user;
+    const isAdmin = user.type === 1;
+    const isGestor = user.type === 3;
+    const isComum = user.type === 2;
+    
+    res.render('dashboard/index', {
+        title: 'Dashboard',
+        user: user,
+        isAuthenticated: true,
+        isAdmin: isAdmin,
+        isGestor: isGestor,
+        isComum: isComum,
+        isAdminOrGestor: isAdmin || isGestor,
+        stats: {
+            totalUsuarios: 3,
+            totalEspacos: 0,
+            totalReservas: 0,
+            minhasReservas: 0
+        }
     });
 };

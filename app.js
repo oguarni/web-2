@@ -1,132 +1,249 @@
-// Importações necessárias
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+    process.exit(1);
+});
+
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const flash = require('connect-flash');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const db = require('./config/db_sequelize');
-const connectMongo = require('./config/db_mongoose');
-const webRoutes = require('./routers/web');
-const apiRoutes = require('./routers/api');
+const cors = require('cors'); // Adicionado
+const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
-const errorHandler = require('./middlewares/errorHandler');
+const webRoutes = require('./routers/web');
+const apiRoutes = require('./routers/api');
+const { errorHandler } = require('./middlewares/errorHandler');
+const { sanitizeInput } = require('./middlewares/sanitization');
+const db = require('./config/db_sequelize');
+require('./config/db_mongoose');
 
-const app = express();
+const app = express(); // Apenas uma declaração
 
-// Conectar ao MongoDB
-connectMongo();
+// Make database available to all routes
+app.set('db', db);
 
-// Middlewares
+// --- Middlewares Principais ---
+
+// 1. CORS: Deve vir antes das rotas.
+app.use(cors({
+    origin: process.env.CORS_ORIGIN
+}));
+
+// 2. Parsers para JSON e URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuração da sessão
+// JSON parsing error handler
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid JSON format',
+            code: 'INVALID_JSON'
+        });
+    }
+    next(err);
+});
+
+// 3. Input sanitization for XSS protection
+app.use(sanitizeInput);
+
+// 4. Rate limiting middleware
+// Strategy: Multi-tier rate limiting for enhanced security against brute force attacks and API abuse
+
+// Strict rate limiter for authentication endpoints
+// Purpose: Prevent brute force login attacks by limiting to 5 attempts per 15 minutes
+// Only failed login attempts count towards the limit (skipSuccessfulRequests: true)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per window
+    message: {
+        success: false,
+        message: 'Too many login attempts, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful requests
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many login attempts, please try again later.'
+        });
+    }
+});
+
+// General API rate limiter
+// Purpose: Prevent API abuse and ensure fair usage across all endpoints
+// Allows higher volume (100 requests per 15 minutes) for legitimate application usage
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per window
+    message: {
+        success: false,
+        message: 'Too many API requests, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many API requests, please try again later.'
+        });
+    }
+});
+
+// Apply strict rate limiting to authentication endpoints
+app.use('/api/auth/login', authLimiter);
+
+// Apply general rate limiting to all API routes
+app.use('/api', apiLimiter);
+
+// 5. Configuração da sessão
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_default_secret_key',
+    secret: process.env.SESSION_SECRET || 'default_secret_key',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
-// --- Lógica para criar dados iniciais ---
+// 6. Configuração do flash para mensagens
+app.use(flash());
+
+// --- Configuração de Views e Arquivos Estáticos ---
+
+// View Engine (Handlebars)
+const hbs = require('hbs');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
+
+// Register handlebars partials and layouts
+hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
+hbs.localsAsTemplateData(app);
+
+// Register handlebars helpers
+hbs.registerHelper('tipoUsuario', function(tipo) {
+    switch(tipo) {
+        case 1: return 'Admin';
+        case 2: return 'Usuário';
+        case 3: return 'Gestor';
+        default: return 'Usuário';
+    }
+});
+
+hbs.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+hbs.registerHelper('formatDateTime', function(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
+});
+
+// Servir arquivos estáticos (CSS, imagens) para a aplicação MVC
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Servir os arquivos estáticos da build do React
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// --- Rotas ---
+
+// Rotas da API
+app.use('/api', apiRoutes);
+
+// Rotas da aplicação Web (MVC)
+app.use('/web', webRoutes);
+
+// Rota para a documentação da API (Swagger)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Redirects for legacy routes
+app.use('/reservas', (req, res) => {
+    res.redirect('/web/reservas' + req.url);
+});
+
+app.use('/espacos', (req, res) => {
+    res.redirect('/web/espacos' + req.url);
+});
+
+app.use('/usuarios', (req, res) => {
+    res.redirect('/web/usuarios' + req.url);
+});
+
+// Rota Catch-all para o React
+app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/web')) {
+        return next();
+    }
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+    });
+});
+
+// --- Tratamento de Erros ---
+app.use(errorHandler);
+
+// --- Inicialização do Servidor ---
+
+const PORT = process.env.PORT || 8081;
 
 const createDefaultUsers = async () => {
     try {
-        const adminExists = await db.Usuario.findOne({ where: { login: 'admin' } });
+        const adminExists = await db.User.findOne({ where: { login: 'admin' } });
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
-            await db.Usuario.create({ nome: 'Administrador', login: 'admin', senha: hashedPassword, tipo: 1 });
+            await db.User.create({ name: 'Administrador', login: 'admin', password: hashedPassword, type: 1 });
+            console.log('--> Usuário "admin" criado com sucesso.');
         }
 
-        const userExists = await db.Usuario.findOne({ where: { login: 'usuario' } });
+        const userExists = await db.User.findOne({ where: { login: 'usuario' } });
         if (!userExists) {
             const hashedPassword = await bcrypt.hash('usuario123', 10);
-            await db.Usuario.create({ nome: 'Usuário Comum', login: 'usuario', senha: hashedPassword, tipo: 2 });
+            await db.User.create({ name: 'Usuário Comum', login: 'usuario', password: hashedPassword, type: 2 });
+            console.log('--> Usuário "usuario" criado com sucesso.');
         }
 
-        const gestorExists = await db.Usuario.findOne({ where: { login: 'gestor' } });
+        const gestorExists = await db.User.findOne({ where: { login: 'gestor' } });
         if (!gestorExists) {
             const hashedPassword = await bcrypt.hash('gestor123', 10);
-            await db.Usuario.create({ nome: 'Gestor de Espaços', login: 'gestor', senha: hashedPassword, tipo: 3 });
+            await db.User.create({ name: 'Gestor de Espaços', login: 'gestor', password: hashedPassword, type: 3 });
+            console.log('--> Usuário "gestor" criado com sucesso.');
         }
     } catch (error) {
         console.error('Erro ao criar utilizadores padrão:', error);
     }
 };
 
-const createSampleData = async () => {
-    try {
-        const amenitiesCount = await db.Amenity.count();
-        let amenities;
-        if (amenitiesCount === 0) {
-            amenities = await db.Amenity.bulkCreate([
-                { nome: 'WiFi', descricao: 'Internet sem fio de alta velocidade' },
-                { nome: 'Projetor', descricao: 'Projetor para apresentações' },
-                { nome: 'Ar Condicionado', descricao: 'Sistema de climatização' },
-                { nome: 'Quadro Branco', descricao: 'Quadro para anotações' },
-                { nome: 'Mesa de Reunião', descricao: 'Mesa grande para reuniões' }
-            ]);
-        } else {
-            amenities = await db.Amenity.findAll();
-        }
-
-        const espacosCount = await db.Espaco.count();
-        if (espacosCount === 0) {
-            const espacos = await db.Espaco.bulkCreate([
-                { nome: 'Sala de Reunião A', descricao: 'Pequena sala para até 6 pessoas', capacidade: 6, localizacao: 'Térreo', ativo: true },
-                { nome: 'Auditório', descricao: 'Espaço para apresentações', capacidade: 50, localizacao: '1º Andar', ativo: true },
-                { nome: 'Sala de Treinamento', descricao: 'Sala para treinamentos', capacidade: 20, localizacao: '2º Andar', ativo: true }
-            ]);
-            await espacos[0].addAmenities([amenities[0], amenities[1], amenities[2]]);
-            await espacos[1].addAmenities([amenities[0], amenities[1], amenities[2], amenities[3], amenities[4]]);
-            await espacos[2].addAmenities([amenities[0], amenities[1], amenities[3], amenities[4]]);
-        }
-    } catch (error) {
-        console.error('Erro ao criar dados de exemplo:', error);
-    }
-};
-
-// --- Fim da lógica de dados iniciais ---
-
-// Rotas
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use('/api', apiRoutes);
-app.use('/', webRoutes);
-
-// Servir o frontend React em produção
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'client/build')));
-    app.get('*', (req, res) => {
-        res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+db.sequelize.sync().then(async () => {
+    console.log('Banco de dados sincronizado.');
+    await createDefaultUsers();
+    app.listen(PORT, () => {
+        console.log(`Servidor unificado rodando na porta ${PORT}`);
+        console.log(`--> Aplicação React (SPA) disponível em http://localhost:${PORT}`);
+        console.log(`--> Aplicação MVC disponível em http://localhost:${PORT}/web`);
+        console.log(`--> Documentação da API disponível em http://localhost:${PORT}/api-docs`);
     });
-}
+}).catch(err => {
+    console.error('Não foi possível conectar ao banco de dados:', err);
+});
 
-// Middleware de tratamento de erros
-app.use(errorHandler);
-
-const PORT = process.env.PORT || 8081;
-
-const startApplication = async () => {
-    try {
-        await db.createDatabaseIfNotExists();
-        await db.connectAndSync();
-
-        // --- CORREÇÃO APLICADA AQUI ---
-        // Agora, estas funções são chamadas sempre que a aplicação inicia.
-        // Como elas verificam se os dados já existem, é seguro executá-las sempre.
-        await createDefaultUsers();
-        await createSampleData();
-
-        app.listen(PORT, () => {
-            // Mensagens de sucesso podem ser úteis para depuração
-            // console.log(`✅ Servidor rodando com sucesso na porta ${PORT}`);
-        });
-
-    } catch (error) {
-        console.error('❌ Falha ao iniciar a aplicação:', error);
-        process.exit(1);
-    }
-};
-
-startApplication();
+module.exports = app;

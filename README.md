@@ -17,7 +17,9 @@ Sistema completo de gerenciamento de reservas de espaços coletivos desenvolvido
 - **MongoDB** - Dados não-relacionais (logs do sistema)
 
 ### Frontend
-- **Express-Handlebars** - Template engine para interface web
+- **Express-Handlebars** - Template engine para interface web MVC
+- **React** - Single Page Application (SPA)
+- **Bootstrap/React-Bootstrap** - Framework CSS
 - **HTML/CSS/JavaScript** - Interface responsiva
 
 ### DevOps
@@ -34,29 +36,44 @@ Sistema completo de gerenciamento de reservas de espaços coletivos desenvolvido
 
 ## ⚡ Como Rodar o Projeto
 
-### 1. Clone o repositório
+### Método 1: Com Docker Compose (Recomendado)
 ```bash
-git clone https://github.com/oguarni/web-2.git
-cd web-2
+# 1. Navegue para o diretório do projeto
+cd SistemaReservasEspacos/web-2
+
+# 2. Inicie os bancos de dados
+docker-compose up postgres mongodb -d
+
+# 3. Instale as dependências
+npm install
+
+# 4. Inicie a aplicação backend
+POSTGRES_USER=postgres POSTGRES_PASSWORD=1234 POSTGRES_DB=web2_db POSTGRES_HOST=localhost npm start
+
+# 5. Em outro terminal, inicie a aplicação React
+cd client
+npm install
+npm start
 ```
 
-### 2. Crie o arquivo de ambiente
+### Método 2: Docker Completo
 ```bash
-cp .env.example .env
-```
-*Os valores padrão no `.env.example` já estão configurados para funcionar com o Docker Compose.*
+# 1. Navegue para o diretório do projeto
+cd SistemaReservasEspacos/web-2
 
-### 3. Suba os contêineres
-```bash
+# 2. Suba todos os contêineres
 docker-compose up --build
+
+# Nota: O Docker pode ter issues de timeout. Use o Método 1 se tiver problemas.
 ```
 
-### 4. Acesse as aplicações
-- **Interface Web:** [http://localhost:8081](http://localhost:8081)
+### 3. Acesse as aplicações
+- **Interface Web MVC:** [http://localhost:8081](http://localhost:8081)
+- **Interface React:** [http://localhost:3001](http://localhost:3001)
 - **API REST:** [http://localhost:8081/api](http://localhost:8081/api)
-- **Documentação da API (Swagger):** [http://localhost:8081/api/docs](http://localhost:8081/api/docs)
+- **Documentação da API (Swagger):** [http://localhost:8081/api-docs](http://localhost:8081/api-docs)
 
-### 5. Teste a API (Opcional)
+### 4. Teste a API (Opcional)
 ```bash
 chmod +x teste_api.sh
 ./teste_api.sh
@@ -182,6 +199,22 @@ O sistema cria automaticamente usuários padrão na primeira execução:
 | **Admin** | `admin` | `admin123` | ✅ Acesso total ao sistema |
 | **Usuário** | `usuario` | `usuario123` | ✅ Criar e gerenciar próprias reservas |
 | **Gestor** | `gestor` | `gestor123` | ✅ Gerenciar espaços e reservas |
+
+## 🔐 Controle de Acesso por Papel
+
+### Interface Web MVC
+- **Admin**: Full CRUD em todas as entidades
+- **Manager (Gestor)**: CRUD em Espaços, Reservas, Amenities. Leitura apenas em Usuários
+- **Client (Usuário)**: Pode visualizar espaços e amenities. Pode criar/visualizar/deletar suas próprias reservas
+
+### API REST
+- **Admin**: Full CRUD em todas as entidades via API
+- **Manager (Gestor)**: CRUD em Espaços, Reservas, Amenities. Leitura apenas em Usuários
+- **Client (Usuário)**: Leitura de espaços e amenities. CRUD das próprias reservas apenas
+
+### React Frontend
+- **Admin/Manager**: Interface completa com todas as funcionalidades
+- **Client**: Interface limitada para visualização de espaços e gerenciamento de reservas próprias
 
 ## 🌐 Usando a API
 

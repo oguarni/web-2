@@ -14,9 +14,9 @@ const logRoutes = require('./logs');
 // Root redirect
 router.get('/', (req, res) => {
     if (req.session.user) {
-        res.redirect('/dashboard');
+        res.redirect('/web/dashboard');
     } else {
-        res.redirect('/login');
+        res.redirect('/web/login');
     }
 });
 
